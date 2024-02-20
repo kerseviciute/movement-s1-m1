@@ -12,6 +12,10 @@ rule all:
         expand(expand("output/{project}/{sid}/emg/filter.pkl",
             project = config["project"],
             sid = samples["Location"])
+        ),
+        expand(expand("output/{project}/{sid}/vm/filter.pkl",
+            project = config["project"],
+            sid = samples["Location"])
         )
 
 #
