@@ -1,5 +1,15 @@
 project: movement-s1-m1
 
-sampleSheet: sample_sheet.csv
+sample_sheet: sample_sheet.csv
 
-samplingRate: 20_000 # Hz
+sampling_rate: 20_000 # Hz
+
+filter:
+  emg:
+    drop_below: 400
+    drop_above: 500
+    scale: True
+  vm:
+    drop_below:
+    drop_above:
+    scale: False

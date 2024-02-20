@@ -7,7 +7,23 @@ rule emg_mne:
     output:
         raw = "output/{project}/{sid}/{cell}/emg/raw.pkl"
     params:
-        samplingRate = config["samplingRate"],
+        sampling_rate = config["sampling_rate"],
         ch_type = "emg"
     conda: "../env/mne.yml"
     script: "../python/create_mne.py"
+
+#
+# Filter the EMG data.
+#
+rule emg_filter:
+    input:
+        raw = "output/{project}/{sid}/{cell}/emg/raw.pkl"
+    output:
+        filter = "output/{project}/{sid}/{cell}/emg/filter.pkl"
+    params:
+        drop_below = config["filter"]["emg"]["drop_below"],
+        drop_above = config["filter"]["emg"]["drop_above"],
+        scale = config["filter"]["emg"]["scale"],
+        ch_type = "emg"
+    conda: "../env/mne.yml"
+    script: "../python/filter.py"

@@ -7,7 +7,7 @@ pd.to_pickle(snakemake, ".create_mne.py.pkl")
 # Read raw data
 data = pd.read_csv(snakemake.input["raw"], sep = "\t", index_col = False)
 
-sfreq = snakemake.params["samplingRate"]
+sfreq = snakemake.params["sampling_rate"]
 
 # Create MNE object
 channels = data.columns
