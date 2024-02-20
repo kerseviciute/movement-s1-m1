@@ -1,3 +1,5 @@
 project: movement-s1-m1
 
-sample_sheet: sample_sheet.csv
+sampleSheet: sample_sheet.csv
+
+samplingRate: 20_000 # Hz
