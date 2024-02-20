@@ -5,7 +5,7 @@ rule emg_mne:
     input:
         raw = "raw/{sid}_{cell}_EMG_rest.txt"
     output:
-        raw = "output/{project}/{sid}/{cell}/emg/raw.pkl"
+        raw = temp("output/{project}/{sid}/{cell}/emg/raw.pkl")
     params:
         sampling_rate = config["sampling_rate"],
         ch_type = "emg"

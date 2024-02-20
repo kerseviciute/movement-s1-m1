@@ -5,7 +5,7 @@ rule vm_mne:
     input:
         raw = "raw/{sid}_{cell}_Vm_rest.txt"
     output:
-        raw = "output/{project}/{sid}/{cell}/vm/raw.pkl"
+        raw = temp("output/{project}/{sid}/{cell}/vm/raw.pkl")
     params:
         sampling_rate = config["sampling_rate"],
         ch_type = "bio"
