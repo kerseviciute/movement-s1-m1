@@ -1,0 +1,8 @@
+name: snakemake
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - snakemake 7.32.4
+  - pandas 2.1.1
+  - htop 3.2.2
