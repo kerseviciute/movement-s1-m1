@@ -27,7 +27,7 @@ conda activate snakemake
 3. Run ``snakemake``:
 
 ```shell
-snakemake --conda-frontend mamba --use-conda --cores 1 -p all
+snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime --cores 1 -p all
 ```
 
 ## TODO
