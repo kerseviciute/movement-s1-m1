@@ -31,8 +31,8 @@ rule sample_sheet:
 #
 rule correlation:
     input:
-        emg = "output/{{project}}/{animal_id}/{cell_name}/emg/filter.pkl",
-        vm = "output/{{project}}/{animal_id}/{cell_name}/vm/filter.pkl"
+        emg = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl",
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
     output:
         correlation = "output/{project}/{animal_id}/{cell_name}/lagged_correlation.csv"
     conda: "env/mne.yml"
