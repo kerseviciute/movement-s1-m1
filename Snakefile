@@ -9,13 +9,9 @@ samples = pd.read_csv(config["sample_sheet"])
 
 rule all:
     input:
-        expand(expand("output/{project}/{sid}/emg/filter.pkl",
+        expand("output/{project}/{sid}/lagged_correlation.csv",
             project = config["project"],
-            sid = samples["Location"])
-        ),
-        expand(expand("output/{project}/{sid}/vm/filter.pkl",
-            project = config["project"],
-            sid = samples["Location"])
+            sid = samples["Location"]
         )
 
 #
@@ -29,3 +25,15 @@ rule sample_sheet:
         samples = expand("output/{project}/samples.RDS", project = config["project"])
     conda: "env/r.yml"
     script: "R/sample_sheet.R"
+
+#
+# Lagged correlation between EMG and membrane potential
+#
+rule correlation:
+    input:
+        emg = "output/{{project}}/{animal_id}/{cell_name}/emg/filter.pkl",
+        vm = "output/{{project}}/{animal_id}/{cell_name}/vm/filter.pkl"
+    output:
+        correlation = "output/{project}/{animal_id}/{cell_name}/lagged_correlation.csv"
+    conda: "env/mne.yml"
+    script: "python/correlation.py"
