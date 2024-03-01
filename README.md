@@ -27,5 +27,14 @@ conda activate snakemake
 3. Run ``snakemake``:
 
 ```shell
-snakemake --conda-frontend mamba --use-conda --cores 1 -p all
+snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime --cores 1 -p all
 ```
+
+## TODO
+
+### Feb 21
+
+- [x] correlation peak (when? / per cell)
+- [x] statistical test on 0 / max timepoint (mean per cell) (compare different groups, e.g. L2/3 vs L5, S1 vs M1)
+- [ ] emg detection with 10th percentile + compare with TKEO
+- [ ] high pass filter (2 Hz) - average abs EMG on detected events
