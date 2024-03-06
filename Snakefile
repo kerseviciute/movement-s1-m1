@@ -9,7 +9,7 @@ samples = pd.read_csv(config["sample_sheet"])
 
 rule all:
     input:
-        expand("output/{project}/{sid}/lagged_correlation.csv",
+        expand("output/{project}/{sid}/movement_episodes.csv",
             project = config["project"],
             sid = samples["Location"]
         )
@@ -37,3 +37,17 @@ rule correlation:
         correlation = "output/{project}/{animal_id}/{cell_name}/lagged_correlation.csv"
     conda: "env/mne.yml"
     script: "python/correlation.py"
+
+#
+# Detect episodes of movement
+#
+rule movement:
+    input:
+        data = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl"
+    output:
+        episodes = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv"
+    params:
+        maxTimeApart = config["movement"]["maxTimeApart"],
+        minEventLength = config["movement"]["minLength"]
+    conda: "env/mne.yml"
+    script: "python/movement.py"
