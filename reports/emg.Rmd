@@ -1,0 +1,42 @@
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>Ieva Kerseviciute</small>
+title: Movement in S1 and M1
+---
+
+```{r r_setup, include = FALSE}
+# snakemake <- readRDS(".emg.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+library(foreach)
+library(data.table)
+library(dplyr)
+
+config <- snakemake@config
+
+scriptdir <- snakemake@scriptdir
+prefix <- snakemake@params$prefix
+region <- snakemake@wildcards$region
+
+samples <- fread(snakemake@input$samples)
+samples <- samples[ Region %in% region ]
+```
+
+```{python python_setup}
+import mne
+import numpy as np
+import pandas as pd
+
+with open(f"{r.scriptdir}/python/plot_all_events.py", "r") as file:
+    exec(file.read())
+```
+
+# EMG data preprocessing and movement event detection in `r region` {.tabset .tabset-pills .unlisted .unnumbered}
+
+```{r results}
+pages <- foreach::foreach(animalId = samples[ , AnimalID ], cellName = samples[ , CellName ]) %do% {
+  knitr::knit_child(glue::glue("{snakemake@scriptdir}/reports/components/emg.Rmd"), quiet = TRUE, envir = environment())
+}
+```
+```{r, include = TRUE, results = "asis"}
+cat(unlist(pages), sep = "\n")
+```

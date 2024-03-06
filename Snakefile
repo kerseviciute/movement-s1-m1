@@ -2,16 +2,17 @@ import pandas as pd
 
 configfile: "config.yml"
 
+samples = pd.read_csv(config["sample_sheet"])
+
 include: "rules/emg.smk"
 include: "rules/vm.smk"
-
-samples = pd.read_csv(config["sample_sheet"])
+include: "rules/reports.smk"
 
 rule all:
     input:
-        expand("output/{project}/{sid}/movement_episodes.csv",
-            project = config["project"],
-            sid = samples["Location"]
+        expand("{deploy_directory}/{page}.html",
+            deploy_directory = config["deploy_directory"],
+            page = config["report"]["pages"]
         )
 
 #

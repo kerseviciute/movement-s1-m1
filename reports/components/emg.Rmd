@@ -1,0 +1,35 @@
+## `r animalId` `r cellName` {.unlisted .unnumbered}
+
+```{python}
+prefix = f'{r.prefix}/{r.animalId}/{r.cellName}'
+
+raw = pd.read_pickle(f'{prefix}/emg/raw.pkl')
+data = pd.read_pickle(f'{prefix}/emg/filter.pkl')
+movement = pd.read_csv(f'{prefix}/movement_episodes.csv')
+```
+
+```{python, include = TRUE}
+plot_all_events(data, channels = data.ch_names, movement = movement, limit = 10)
+```
+
+**Figure 1.** All detected movement and rest episodes. Movement episodes are marked in **red**,
+rest episodes are marked in **blue**.
+
+### Preprocessing
+
+The EMG data were filtered to remove frequencies lower than `r config$filter$emg$drop_below` Hz
+and higher than `r config$filter$emg$drop_above` Hz. The symmetric linear-phase FIR filter was used.
+After filtering, the data were scaled using z-transform with the mean and standard deviations of the
+complete sample data.
+
+```{python, include = TRUE}
+plot_all_events(raw, channels = raw.ch_names)
+```
+
+**Figure 2.** EMG data before filtering.
+
+```{python, include = TRUE}
+plot_all_events(data, channels = data.ch_names, limit = 10)
+```
+
+**Figure 3.** EMG data after filtering.

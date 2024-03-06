@@ -1,4 +1,5 @@
-project: movement-s1-m1
+project: "movement-s1-m1"
+deploy_directory: docs
 
 sample_sheet: sample_sheet.csv
 
@@ -19,3 +20,11 @@ detect:
     maxTimeApart: 0.1 # Events closer will be merged
     minLength: 0.2 # (s) Min event length
     percentile: 80
+
+report:
+  pages:
+    - index
+    - emg_S1_L23
+    - emg_S1_L5
+    - emg_M1_L23
+    - emg_M1_L5

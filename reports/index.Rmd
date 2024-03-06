@@ -1,0 +1,12 @@
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>Ieva Kerseviciute</small>
+title: Movement in S1 and M1
+---
+
+```{r, include = FALSE}
+# snakemake <- readRDS(".index.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+```
+
+# Project summary
