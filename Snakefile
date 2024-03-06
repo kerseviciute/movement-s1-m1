@@ -48,6 +48,7 @@ rule movement:
         episodes = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv"
     params:
         maxTimeApart = config["movement"]["maxTimeApart"],
-        minEventLength = config["movement"]["minLength"]
+        minEventLength = config["movement"]["minLength"],
+        percentile = config["movement"]["percentile"]
     conda: "env/mne.yml"
     script: "python/movement.py"

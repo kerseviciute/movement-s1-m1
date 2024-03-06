@@ -13,8 +13,9 @@ sample_data = data.get_data()
 
 min_break = data.info["sfreq"] * snakemake.params["maxTimeApart"]
 min_event_length = data.info["sfreq"] * snakemake.params["minEventLength"]
+percentile = snakemake.params["percentile"]
 
-threshold = np.percentile(np.abs(sample_data), 90)
+threshold = np.percentile(np.abs(sample_data), percentile)
 
 episodes = []
 
