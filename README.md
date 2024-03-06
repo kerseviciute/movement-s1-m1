@@ -36,5 +36,22 @@ snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime --cores 1 -p
 
 - [x] correlation peak (when? / per cell)
 - [x] statistical test on 0 / max timepoint (mean per cell) (compare different groups, e.g. L2/3 vs L5, S1 vs M1)
-- [ ] emg detection with 10th percentile + compare with TKEO
-- [ ] high pass filter (2 Hz) - average abs EMG on detected events
+- [x] emg detection with 10th percentile + compare with TKEO
+- [x] high pass filter (2 Hz) - average abs EMG on detected events
+
+### Mar 06
+
+Use movements detected with 10th upper percentile method. Do not filter out any
+detected episodes for now.
+
+- [ ] color by cortex in correlation plots
+- [ ] detect EMG off
+- [ ] ap detection (90 percentile?)
+- [ ] compare movement on/off (mean vm, sd, ap)
+  - [ ] frequency analysis
+- [ ] kursinio planas
+
+### Mar ?
+
+- [ ] compare conductance during on/off
+- [ ] EMG event filtering
