@@ -1,4 +1,4 @@
-def plot_all_events(data, channels, movement = None, no_movement = None, limit = 4, show_full = True):
+def plot_all_events(data, channels, movement = None, no_movement = None, limit = 4, show_full = True, alpha = 1):
     from matplotlib import pyplot as plt
     import numpy as np
 
@@ -34,7 +34,7 @@ def plot_all_events(data, channels, movement = None, no_movement = None, limit =
                 start = int(row["EventStart"])
                 end = int(row["EventEnd"])
 
-                axes[i].plot(x[start:end], y[start:end], linewidth = 1, color = "red", alpha = 0.5)
+                axes[i].plot(x[start:end], y[start:end], linewidth = 1, color = "red", alpha = alpha)
 
         if no_movement is not None:
             events = no_movement[no_movement["Channel"] == i]
@@ -42,7 +42,7 @@ def plot_all_events(data, channels, movement = None, no_movement = None, limit =
                 start = int(row["EventStart"])
                 end = int(row["EventEnd"])
 
-                axes[i].plot(x[start:end], y[start:end], linewidth = 1, color = "blue", alpha = 0.5)
+                axes[i].plot(x[start:end], y[start:end], linewidth = 1, color = "blue", alpha = alpha)
 
         if i != 0:
             axes[i].spines["top"].set_visible(False)
