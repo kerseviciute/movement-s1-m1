@@ -14,7 +14,8 @@ filter:
     drop_above:
     scale: False
 
-movement:
-  maxTimeApart: 0.1 # Events closer will be merged
-  minLength: 0.2 # (s) Min event length
-  percentile: 90
+detect:
+  movement:
+    maxTimeApart: 0.1 # Events closer will be merged
+    minLength: 0.2 # (s) Min event length
+    percentile: 80

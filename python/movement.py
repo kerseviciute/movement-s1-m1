@@ -15,12 +15,18 @@ min_break = data.info["sfreq"] * snakemake.params["maxTimeApart"]
 min_event_length = data.info["sfreq"] * snakemake.params["minEventLength"]
 percentile = snakemake.params["percentile"]
 
-threshold = np.percentile(np.abs(sample_data), percentile)
+# Apply low frequency filter on all channels
+filtered_data = []
+for channel in sample_data:
+    filtered_data.append(filter_emg(channel, low_freq = 20, sfreq = data.info["sfreq"]))
+filtered_data = np.array(filtered_data)
+
+threshold = np.percentile(np.abs(filtered_data), percentile)
 
 episodes = []
 
 for i, _ in enumerate(data.ch_names):
-    signal = sample_data[i]
+    signal = filtered_data[i]
 
     ch_episodes = detect_movement_episodes(
         signal = signal,
@@ -35,5 +41,7 @@ episodes = pd.concat(episodes)
 episodes = episodes.reset_index(drop = True)
 
 episodes = episodes[ episodes["EventLength"] > min_event_length ]
+
+print(f"Number of detected movement episodes: {len(episodes)}")
 
 episodes.to_csv(snakemake.output["episodes"], index = False)

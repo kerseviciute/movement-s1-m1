@@ -1,3 +1,17 @@
+def filter_emg(data, low_freq = 100, sfreq = 20_000):
+    from scipy import signal
+    import numpy as np
+
+    butter_filter = signal.butter(
+        N = 20,
+        Wn = [ low_freq ],
+        btype = "lowpass",
+        output = "sos",
+        fs = sfreq
+    )
+
+    return signal.sosfiltfilt(butter_filter, np.abs(data))
+
 def merge_close_events(dt, min_break):
     import pandas as pd
 
