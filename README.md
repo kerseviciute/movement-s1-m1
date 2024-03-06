@@ -44,7 +44,8 @@ snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime --cores 1 -p
 Use movements detected with 10th upper percentile method. Do not filter out any
 detected episodes for now.
 
-- [ ] color by cortex in correlation plots
+- [ ] show that correlation is different from zero
+- [x] color by cortex in correlation plots
 - [ ] detect EMG off
 - [ ] ap detection (90 percentile?)
 - [ ] compare movement on/off (mean vm, sd, ap)
