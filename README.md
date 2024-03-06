@@ -1,5 +1,7 @@
 # Movement in S1 and M1 cortices
 
+Click [here](https://kerseviciute.github.io/movement-s1-m1/) to see full analysis.
+
 ## How to run this analysis
 
 The data should be available under the `raw` directory in this repository root (create a symbolic link).
