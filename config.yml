@@ -1,4 +1,4 @@
-project: "movement-s1-m1"
+project: movement-s1-m1
 deploy_directory: docs
 
 sample_sheet: sample_sheet.csv
@@ -17,11 +17,13 @@ filter:
 
 detect:
   movement:
-    maxTimeApart: 0.1 # Events closer will be merged
+    maxTimeApart: 0.025 # (s) Events closer will be merged
     minLength: 0.2 # (s) Min event length
-    percentile: 80
+    percentile: 90
 
 report:
+  author: Ieva Kerseviciute
+  title: Movement in S1 and M1
   pages:
     - index
     - emg_S1_L23

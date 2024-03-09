@@ -15,21 +15,33 @@ plot_all_events(data, channels = data.ch_names, movement = movement, limit = 10)
 **Figure 1.** All detected movement and rest episodes. Movement episodes are marked in **red**,
 rest episodes are marked in **blue**.
 
-### Preprocessing
+```{python, include = FALSE}
+raw.filter(l_freq = 2, h_freq = None, fir_design = "firwin", picks = "emg")
+sample_data = raw.get_data()
 
-The EMG data were filtered to remove frequencies lower than `r config$filter$emg$drop_below` Hz
-and higher than `r config$filter$emg$drop_above` Hz. The symmetric linear-phase FIR filter was used.
-After filtering, the data were scaled using z-transform with the mean and standard deviations of the
-complete sample data.
+episode_data = []
 
-```{python, include = TRUE}
-plot_all_events(raw, channels = raw.ch_names)
+for i, episode in movement.iterrows():
+    if episode["EventStart"] < 500:
+        continue
+
+    start = episode["EventStart"] - 500
+    end = episode["EventStart"] + 1000
+    channel = episode["Channel"]
+
+    episode_data.append(sample_data[channel][start:end])
+
+episode_data = np.array(episode_data)
+x = np.arange(-500, 1000, 1) / raw.info["sfreq"]
 ```
 
-**Figure 2.** EMG data before filtering.
-
 ```{python, include = TRUE}
-plot_all_events(data, channels = data.ch_names, limit = 10)
-```
+for episode in episode_data:
+    plt.plot(x, episode, c = "lightgray", linewidth = 0.5)
 
-**Figure 3.** EMG data after filtering.
+episode_data_mean = np.mean(np.abs(episode_data), axis = 0)
+
+plt.axvline(x = 0, linestyle = "-")
+plt.plot(x, episode_data_mean * 10, c = "black", linewidth = 0.75)
+plt.show()
+```
