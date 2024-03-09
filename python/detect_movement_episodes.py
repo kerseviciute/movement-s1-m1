@@ -67,21 +67,22 @@ def detect_movement_episodes(signal, threshold, sfreq, min_break = 500):
 
     return movement_data
 
-def detect_rest_episodes(signal, threshold, sfreq, min_break):
+def detect_rest_episodes(signal, threshold, sfreq, min_break, min_length):
     import numpy as np
     import pandas as pd
 
-    signal_under_threshold = np.abs(signal) < threshold
-    change_indices = np.where(np.diff(signal_under_threshold))[0]
+    signal_over_threshold = np.abs(signal) > threshold
+    change_indices = np.where(np.diff(signal_over_threshold))[0]
 
     movement_data = pd.DataFrame({
         "EventStart": np.insert(change_indices + 1, 0, 0),
-        "EventEnd": np.append(change_indices + 1, len(signal_under_threshold))
+        "EventEnd": np.append(change_indices + 1, len(signal_over_threshold))
     })
 
-    movement_data["Movement"] = signal_under_threshold[movement_data["EventStart"]]
-    movement_data = movement_data[movement_data["Movement"]]
+    movement_data["Movement"] = signal_over_threshold[movement_data["EventStart"]]
+    movement_data = movement_data[ movement_data["Movement"] == False ]
     movement_data["EventLength"] = list(movement_data["EventEnd"] - movement_data["EventStart"])
+    movement_data = movement_data[movement_data["EventLength"] >= min_length]
 
     movement_data = merge_close_events(movement_data, min_break = min_break)
 

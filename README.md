@@ -48,7 +48,8 @@ detected episodes for now.
 
 - [x] show that correlation is different from zero
 - [x] color by cortex in correlation plots
-- [ ] detect EMG off
+- [x] detect EMG off
+  - [ ] What is happening in W3? How to filter out the heartbeat?
 - [ ] ap detection (90 percentile?)
 - [ ] compare movement on/off (mean vm, sd, ap)
   - [ ] frequency analysis

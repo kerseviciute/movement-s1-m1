@@ -17,6 +17,9 @@ rule report_emg:
             sid = samples["Location"]),
         movement = expand("output/{project}/{sid}/movement_episodes.csv",
             project = config["project"],
+            sid = samples["Location"]),
+        rest = expand("output/{project}/{sid}/rest_episodes.csv",
+            project = config["project"],
             sid = samples["Location"])
     output:
         report = "{deploy_directory}/emg_{region}.html"

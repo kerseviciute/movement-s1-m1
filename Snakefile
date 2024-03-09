@@ -53,3 +53,18 @@ rule movement:
         percentile = config["detect"]["movement"]["percentile"]
     conda: "env/mne.yml"
     script: "python/movement.py"
+
+#
+# Detect episodes of rest
+#
+rule rest:
+    input:
+        data = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl"
+    output:
+        episodes = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
+    params:
+        maxTimeApart = config["detect"]["rest"]["maxTimeApart"],
+        minEventLength = config["detect"]["rest"]["minLength"],
+        percentile = config["detect"]["rest"]["percentile"]
+    conda: "env/mne.yml"
+    script: "python/rest.py"
