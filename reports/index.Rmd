@@ -1,6 +1,7 @@
 ```{r, include = FALSE}
 # snakemake <- readRDS(".index.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+config <- snakemake@config
 ```
 
 ---
