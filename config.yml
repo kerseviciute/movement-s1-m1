@@ -7,8 +7,8 @@ sampling_rate: 20_000 # Hz
 
 filter:
   emg:
-    drop_below: 400
-    drop_above: 500
+    drop_below: 500
+    drop_above: 1000
     scale: True
   vm:
     drop_below:
