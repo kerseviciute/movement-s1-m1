@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 
 showTable <- function(dt) {
-  scrollY <- 50 + nrow(dt) * 21
+  scrollY <- 50 + nrow(dt) * 30
   scrollY <- min(scrollY, 400)
 
   DT::datatable(

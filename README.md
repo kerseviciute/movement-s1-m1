@@ -50,11 +50,12 @@ detected episodes for now.
 - [x] color by cortex in correlation plots
 - [x] detect EMG off
   - [x] What is happening in W3? How to filter out the heartbeat?
-  - [ ] Add counts of EMG on / off in the report (number of events, total time, test for significance)
+  - [x] Add counts of EMG on / off in the report (number of events, total time)
 - [ ] AP detection (90 percentile?)
-- [ ] compare movement on/off (mean vm, sd, AP)
+- [ ] compare movement on/off (number of events, time, mean vm, sd, AP)
   - [ ] frequency analysis
 - [ ] correlation report html
+- [ ] preprocessing report html
 - [ ] kursinio planas
 
 ### Mar ?

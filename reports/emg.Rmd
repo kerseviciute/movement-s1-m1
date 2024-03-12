@@ -4,6 +4,7 @@ snakemake@source("R/rmd_setup.R")
 library(foreach)
 library(data.table)
 library(dplyr)
+library(glue)
 
 config <- snakemake@config
 
@@ -21,6 +22,43 @@ author: <small>`r config$report$author`</small>
 title: `r config$report$title`
 ---
 
+# Detection of movement episodes in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills .unlisted .unnumbered}
+
+**Table 1.** Number of movement and rest episodes and their overall length in all the samples.
+
+```{r, include = TRUE}
+episodes <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
+  sample <- samples[ SID == sid ]
+
+  fileMove <- glue("{prefix}/{sample[ , Location ]}/movement_episodes.csv")
+  fileRest <- glue("{prefix}/{sample[ , Location ]}/rest_episodes.csv")
+
+  rbind(
+    fread(fileMove),
+    fread(fileRest)
+  ) %>%
+    .[ , SID := sid ]
+}
+
+counts <- episodes[ ,
+  list(Count = .N, Time = round(sum(Length), 2)),
+  by = list(SID, Movement)
+]
+
+counts <- merge(
+  counts[ Movement == TRUE ] %>%
+    .[ , Movement := NULL ] %>%
+    setnames(c("Count", "Time"), c("Movement", "TimeMovement")),
+  counts[ Movement == FALSE ] %>%
+    .[ , Movement := NULL ] %>%
+    setnames(c("Count", "Time"), c("Rest", "TimeRest"))
+) %>%
+  setcolorder(c("SID", "TimeMovement", "TimeRest")) %>%
+  .[]
+
+counts %>% showTable()
+```
+
 ```{python python_setup}
 import mne
 import numpy as np
@@ -30,8 +68,6 @@ import matplotlib.pyplot as plt
 with open(f"{r.scriptdir}/python/plot_all_events.py", "r") as file:
     exec(file.read())
 ```
-
-# Detection of movement episodes in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills .unlisted .unnumbered}
 
 ```{r results}
 pages <- foreach::foreach(animalId = samples[ , AnimalID ], cellName = samples[ , CellName ]) %do% {
