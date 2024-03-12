@@ -1,0 +1,19 @@
+```{r, include = FALSE}
+# snakemake <- readRDS(".preprocess.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+config <- snakemake@config
+
+config <- snakemake@config
+
+scriptdir <- snakemake@scriptdir
+prefix <- snakemake@params$prefix
+region <- snakemake@wildcards$region
+```
+
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>`r config$report$author`</small>
+title: `r config$report$title`
+---
+
+# EMG and Vm preprocessing in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills .unlisted .unnumbered}

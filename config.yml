@@ -30,6 +30,11 @@ report:
   title: Movement in S1 and M1
   pages:
     - index
+    - correlation
+    - preprocess_S1_L23
+    - preprocess_S1_L5
+    - preprocess_M1_L23
+    - preprocess_M1_L5
     - emg_S1_L23
     - emg_S1_L5
     - emg_M1_L23

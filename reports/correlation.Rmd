@@ -1,0 +1,11 @@
+```{r, include = FALSE}
+# snakemake <- readRDS(".correlation.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+config <- snakemake@config
+```
+
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>`r config$report$author`</small>
+title: `r config$report$title`
+---
