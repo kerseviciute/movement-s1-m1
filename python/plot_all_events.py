@@ -1,6 +1,12 @@
-def plot_all_events(data, channels, movement = None, no_movement = None, limit = 4, show_full = True, alpha = 1):
+def plot_all_events(data, channels, movement = None, no_movement = None, limit = None, show_full = True, alpha = 1):
     from matplotlib import pyplot as plt
     import numpy as np
+
+    if limit is None:
+        limit = [-4, 4]
+
+    limit_start = limit[0]
+    limit_end = limit[1]
 
     figure, axes = plt.subplots(nrows = len(data.ch_names), figsize = (20, 0.5 * len(data.ch_names)))
     plt.subplots_adjust(
@@ -21,7 +27,7 @@ def plot_all_events(data, channels, movement = None, no_movement = None, limit =
             axes[i].plot(x, y, linewidth = 0.5, color = "black")
 
         if limit is not None:
-            axes[i].set_ylim(-limit, limit)
+            axes[i].set_ylim(limit_start, limit_end)
 
         axes[i].get_xaxis().set_ticks([])
         axes[i].get_yaxis().set_ticks([])

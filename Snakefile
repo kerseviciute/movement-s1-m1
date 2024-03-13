@@ -37,7 +37,7 @@ rule correlation:
     output:
         correlation = "output/{project}/{animal_id}/{cell_name}/lagged_correlation.csv"
     conda: "env/mne.yml"
-    script: "python/correlation.py"
+    script: "python/correlation_lag.py"
 
 #
 # Detect episodes of movement
@@ -68,3 +68,11 @@ rule rest:
         percentile = config["detect"]["rest"]["percentile"]
     conda: "env/mne.yml"
     script: "python/rest.py"
+
+rule action_potential:
+    input:
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
+    output:
+        action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv"
+    conda: "env/mne.yml"
+    script: "python/action_potential.py"

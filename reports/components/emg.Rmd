@@ -10,7 +10,7 @@ rest = pd.read_csv(f'{prefix}/rest_episodes.csv')
 ```
 
 ```{python, include = TRUE}
-plot_all_events(data, channels = data.ch_names, movement = movement, no_movement = rest, limit = 10)
+plot_all_events(data, channels = data.ch_names, movement = movement, no_movement = rest, limit = [-10, 10])
 ```
 
 **Figure 1.** All detected movement and rest episodes. Movement episodes are marked in **red**,
