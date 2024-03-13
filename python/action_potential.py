@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 pd.to_pickle(snakemake, ".action_potential.py.pkl")
-# snakemake = pd.read_pickle(".correlation_lag.py.pkl")
+# snakemake = pd.read_pickle(".action_potential.py.pkl")
 
 with open(f"{snakemake.scriptdir}/action_potential_methods.py", "r") as file:
     exec(file.read())
