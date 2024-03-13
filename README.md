@@ -51,11 +51,11 @@ detected episodes for now.
 - [x] detect EMG off
   - [x] What is happening in W3? How to filter out the heartbeat?
   - [x] Add counts of EMG on / off in the report (number of events, total time)
-- [ ] AP detection (90 percentile?)
+- [x] AP detection (90 percentile?)
+- [ ] preprocessing report html
 - [ ] compare movement on/off (number of events, time, mean vm, sd, AP)
   - [ ] frequency analysis
 - [ ] correlation report html
-- [ ] preprocessing report html
 - [ ] kursinio planas
 
 ### Mar ?
