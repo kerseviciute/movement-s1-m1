@@ -24,6 +24,9 @@ detect:
     maxTimeApart: 0.0025 # (s) Events closer will be merged
     minLength: 0.1 # (s) Min event length
     percentile: 90
+  ap:
+    diffThreshold: 1.1
+    minReachedVoltage: -25
 
 report:
   author: Ieva Kerseviciute
