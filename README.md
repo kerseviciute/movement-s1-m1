@@ -75,7 +75,7 @@ detected episodes for now.
 - Filtering had to be changed because heart beat was disturbing to the rest period detection. In some cases, it
   still is, and I am not sure how to get rid of it.
   - Few samples have very low number of rest episodes (e.g. W2 C3 S1 L23).
-- Decided to use differential analysis for detection of action potentials (90th quantile and any average-like
+- Decided to use differential analysis for detection of action potentials (90th percentile and any average-like
   methods will likely introduce a lot of false positives).
   - AP detection: the hell happened in W4 C15 (S1 L5)?
 

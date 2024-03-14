@@ -1,15 +1,15 @@
-def find_onset(differential, start_index):
+def find_onset(differential, start_index, min_value = 1):
     value = differential[start_index]
     index = start_index
 
-    while value > 1 and index > 0:
+    while value > min_value and index > 0:
         index -= 1
         value = differential[index]
 
     return index
 
 
-def find_offset(differential, start_index):
+def find_offset(differential, start_index, max_value = 0):
     value = differential[start_index]
     index = start_index
 
@@ -17,7 +17,7 @@ def find_offset(differential, start_index):
         index += 1
         value = differential[index]
 
-    while value < 0 and index < len(differential) - 1:
+    while value < max_value and index < len(differential) - 1:
         index += 1
         value = differential[index]
 

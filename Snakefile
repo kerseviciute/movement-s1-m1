@@ -74,5 +74,8 @@ rule action_potential:
         vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
     output:
         action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv"
+    params:
+        diffThreshold = config["detect"]["ap"]["diffThreshold"],
+        minReachedVoltage = config["detect"]["ap"]["minReachedVoltage"]
     conda: "env/mne.yml"
     script: "python/action_potential.py"

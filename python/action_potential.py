@@ -14,12 +14,15 @@ vm = pd.read_pickle(snakemake.input["vm"])
 data = vm.get_data()
 time = vm.times
 
+diffThreshold = snakemake.params["diffThreshold"]
+minReachedVoltage = snakemake.params["minReachedVoltage"]
+
 aps = []
 
 for i, _ in enumerate(vm.ch_names):
     signal = data[i, :]
 
-    channel_ap = find_ap(signal, time, threshold = 1.1)
+    channel_ap = find_ap(signal, time, threshold = diffThreshold)
 
     if len(channel_ap) >= 1:
         channel_ap["Channel"] = i
@@ -32,7 +35,7 @@ else:
         columns = [ "EventStart", "EventEnd", "Start", "End", "Channel", "MaxVm" ]
     )
 
-aps = aps[ aps["MaxVm"] > -25 ]
+aps = aps[ aps["MaxVm"] > minReachedVoltage ]
 aps = aps.reset_index(drop = True)
 
 # Save results
