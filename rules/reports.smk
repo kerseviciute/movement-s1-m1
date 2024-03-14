@@ -24,19 +24,16 @@ rule report_correlation:
 rule report_preprocess:
     input:
         samples = config["sample_sheet"],
-        emg_raw = expand("output/{project}/{sid}/emg/raw.pkl",
-            project = config["project"],
-            sid = samples["Location"]),
-        emg_filter = expand("output/{project}/{sid}/emg/filter.pkl",
-            project = config["project"],
-            sid = samples["Location"]),
         vm_filter = expand("output/{project}/{sid}/vm/filter.pkl",
+            project = config["project"],
+            sid = samples["Location"]),
+        action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
             project = config["project"],
             sid = samples["Location"])
     output:
-        report = "{deploy_directory}/preprocess_{region}.html"
+        report = "{deploy_directory}/vm_{region}.html"
     params:
-        script = "reports/preprocess.Rmd",
+        script = "reports/vm.Rmd",
         prefix = expand("output/{project}", project = config["project"])
     conda: "../env/r.yml"
     script: "../R/render.R"

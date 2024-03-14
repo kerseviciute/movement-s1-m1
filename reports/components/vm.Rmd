@@ -1,0 +1,12 @@
+## `r animalId` `r cellName` {.unlisted .unnumbered}
+
+```{python}
+prefix = f"{r.prefix}/{r.animalId}/{r.cellName}"
+
+vm = pd.read_pickle(f"{prefix}/vm/filter.pkl")
+ap = pd.read_csv(f"{prefix}/action_potentials.csv")
+```
+
+```{python, include = TRUE}
+plot_all_events(vm, channels = vm.ch_names, movement = ap, limit = [-100, 10])
+```

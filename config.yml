@@ -31,10 +31,10 @@ report:
   pages:
     - index
     - correlation
-    - preprocess_S1_L23
-    - preprocess_S1_L5
-    - preprocess_M1_L23
-    - preprocess_M1_L5
+    - vm_S1_L23
+    - vm_S1_L5
+    - vm_M1_L23
+    - vm_M1_L5
     - emg_S1_L23
     - emg_S1_L5
     - emg_M1_L23

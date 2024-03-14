@@ -9,26 +9,26 @@ navbar:
       href: correlation.html
     - text: S1 L2/3
       menu:
-      - text: Preprocessing
-        href: preprocess_S1_L23.html
+      - text: AP detection
+        href: vm_S1_L23.html
       - text: Movement detection
         href: emg_S1_L23.html
     - text: S1 L5
       menu:
-        - text: Preprocessing
-          href: preprocess_S1_L5.html
+        - text: AP detection
+          href: vm_S1_L5.html
         - text: Movement detection
           href: emg_S1_L5.html
     - text: M1 L2/3
       menu:
-        - text: Preprocessing
-          href: preprocess_M1_L23.html
+        - text: AP detection
+          href: vm_M1_L23.html
         - text: Movement detection
           href: emg_M1_L23.html
     - text: M1 L5
       menu:
-        - text: Preprocessing
-          href: preprocess_M1_L5.html
+        - text: AP detection
+          href: vm_M1_L5.html
         - text: Movement detection
           href: emg_M1_L5.html
 output:

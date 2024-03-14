@@ -18,9 +18,8 @@ aps = []
 
 for i, _ in enumerate(vm.ch_names):
     signal = data[i, :]
-    differential = np.diff(signal)
 
-    channel_ap = find_ap(differential, time, threshold = 1.5)
+    channel_ap = find_ap(signal, time, threshold = 1.1)
 
     if len(channel_ap) >= 1:
         channel_ap["Channel"] = i
@@ -30,8 +29,11 @@ if len(aps) > 1:
     aps = pd.concat(aps)
 else:
     aps = pd.DataFrame(
-        columns = [ "EventStart", "EventEnd", "Start", "End", "Channel" ]
+        columns = [ "EventStart", "EventEnd", "Start", "End", "Channel", "MaxVm" ]
     )
+
+aps = aps[ aps["MaxVm"] > -25 ]
+aps = aps.reset_index(drop = True)
 
 # Save results
 aps.to_csv(snakemake.output["action_potentials"], index = False)

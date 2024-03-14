@@ -1,6 +1,13 @@
 # Movement in S1 and M1 cortices
 
-Click [here](https://kerseviciute.github.io/movement-s1-m1/) to see full analysis.
+**Complete up-to-date analysis is available [here](https://kerseviciute.github.io/movement-s1-m1/).**
+
+The Jupyter notebooks (under the `notebooks` directory) are used primarily for algorithm and method
+development and usually include runs for a single sample. After, the finalized algorithms
+are moved to the pipeline (to the `R` or `python` directories) and are used for all samples.
+While I try to rerun the notebooks for all changes, sometimes **the notebooks may not be up-to-date**.
+Please see the `docs` directory or the [deployed website](https://kerseviciute.github.io/movement-s1-m1/)
+for the most recent results.
 
 ## How to run this analysis
 
@@ -52,11 +59,25 @@ detected episodes for now.
   - [x] What is happening in W3? How to filter out the heartbeat?
   - [x] Add counts of EMG on / off in the report (number of events, total time)
 - [x] AP detection (90 percentile?)
-- [ ] preprocessing report html
+  - [x] filter out false positives!
+- [x] vm report html
 - [ ] compare movement on/off (number of events, time, mean vm, sd, AP)
   - [ ] frequency analysis
 - [ ] correlation report html
 - [ ] kursinio planas
+- [ ] add method descriptions to reports
+  - [ ] index (how to use the website)
+  - [ ] correlation analysis
+  - [ ] EMG (filtering + movement detection)
+  - [ ] Vm (filtering + AP detection)
+
+**To discuss**
+- Filtering had to be changed because heart beat was disturbing to the rest period detection. In some cases, it
+  still is, and I am not sure how to get rid of it.
+  - Few samples have very low number of rest episodes (e.g. W2 C3 S1 L23).
+- Decided to use differential analysis for detection of action potentials (90th quantile and any average-like
+  methods will likely introduce a lot of false positives).
+  - AP detection: the hell happened in W4 C15 (S1 L5)?
 
 ### Mar ?
 

@@ -1,0 +1,64 @@
+```{r, include = FALSE}
+# snakemake <- readRDS(".vm.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+library(foreach)
+library(data.table)
+library(dplyr)
+library(glue)
+
+config <- snakemake@config
+
+scriptdir <- snakemake@scriptdir
+prefix <- snakemake@params$prefix
+region <- snakemake@wildcards$region
+
+samples <- fread(snakemake@input$samples)
+samples <- samples[ Region %in% region ]
+```
+
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>`r config$report$author`</small>
+title: `r config$report$title`
+---
+
+# Detection of action potentials in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills .unlisted .unnumbered}
+
+```{r, include = TRUE, warning = FALSE}
+actionPotentials <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
+  sample <- samples[ SID == sid ]
+
+  filename <- glue("{prefix}/{sample[ , Location ]}/action_potentials.csv")
+
+  fread(filename) %>%
+    .[ , SID := sid ]
+}
+
+counts <- rbind(
+  actionPotentials[ , list(Count = .N), by = SID ],
+  data.table(SID = samples[ !(SID %in% actionPotentials[ , SID ]), SID ], Count = 0)
+) %>%
+  .[ match(samples[ , SID ], SID) ]
+
+counts %>% showTable()
+```
+
+```{python python_setup}
+import mne
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+with open(f"{r.scriptdir}/python/plot_all_events.py", "r") as file:
+    exec(file.read())
+```
+
+```{r results}
+pages <- foreach::foreach(animalId = samples[ , AnimalID ], cellName = samples[ , CellName ]) %do% {
+  knitr::knit_child(glue::glue("{snakemake@scriptdir}/reports/components/vm.Rmd"), quiet = TRUE, envir = environment())
+}
+```
+```{r, include = TRUE, results = "asis"}
+cat(unlist(pages), sep = "\n")
+```
+

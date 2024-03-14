@@ -2,7 +2,7 @@ def find_onset(differential, start_index):
     value = differential[start_index]
     index = start_index
 
-    while value > 1:
+    while value > 1 and index > 0:
         index -= 1
         value = differential[index]
 
@@ -24,9 +24,11 @@ def find_offset(differential, start_index):
     return index
 
 
-def find_ap(differential, time, threshold = 1.5):
+def find_ap(signal, time, threshold = 1.5):
     import numpy as np
     import pandas as pd
+
+    differential = np.diff(signal)
 
     over_threshold = np.where(differential > threshold)[0]
 
@@ -45,7 +47,8 @@ def find_ap(differential, time, threshold = 1.5):
             "EventStart": [onset],
             "EventEnd": [offset],
             "Start": [time[onset]],
-            "End": [time[onset]]
+            "End": [time[onset]],
+            "MaxVm": [np.max(signal[onset:offset])]
         }))
 
     aps = pd.concat(aps)
