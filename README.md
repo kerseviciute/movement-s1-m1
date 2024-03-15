@@ -61,10 +61,15 @@ detected episodes for now.
 - [x] AP detection (90 percentile?)
   - [x] filter out false positives!
 - [x] vm report html
-- [ ] compare movement on/off (number of events, time, mean vm, sd, AP)
-  - [ ] frequency analysis
+- [ ] compare movement on/off
+  - [x] number of episodes
+  - [x] episode length
+  - [ ] mean vm
+  - [ ] vm sd
+  - [ ] AP
 - [ ] correlation report html
 - [ ] kursinio planas
+- [ ] frequency analysis (movement on / movement off)
 - [ ] add method descriptions to reports
   - [ ] index (how to use the website)
   - [ ] correlation analysis
