@@ -60,3 +60,23 @@ rule report_emg:
         prefix = expand("output/{project}", project = config["project"])
     conda: "../env/r.yml"
     script: "../R/render.R"
+
+rule report_movement_vs_rest:
+    input:
+        samples = config["sample_sheet"],
+        movement = expand("output/{project}/{sid}/movement_episodes.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        rest = expand("output/{project}/{sid}/rest_episodes.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
+            project = config["project"],
+            sid = samples["Location"])
+    output:
+        report = "{deploy_directory}/movement_vs_rest.html"
+    params:
+        script = "reports/movement_vs_rest.Rmd",
+        prefix = expand("output/{project}", project = config["project"])
+    conda: "../env/r.yml"
+    script: "../R/render.R"

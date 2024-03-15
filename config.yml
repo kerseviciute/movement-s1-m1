@@ -42,3 +42,4 @@ report:
     - emg_S1_L5
     - emg_M1_L23
     - emg_M1_L5
+    - movement_vs_rest

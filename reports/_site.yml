@@ -31,6 +31,8 @@ navbar:
           href: vm_M1_L5.html
         - text: Movement detection
           href: emg_M1_L5.html
+    - text: Movement vs Rest
+      href: movement_vs_rest.html
 output:
   html_document:
     self_contained: true
