@@ -82,3 +82,17 @@ rule action_potential:
         minReachedVoltage = config["detect"]["ap"]["minReachedVoltage"]
     conda: "env/mne.yml"
     script: "python/action_potential.py"
+
+#
+# Basic Vm statistics for plots
+#
+rule vm_statistics:
+    input:
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl",
+        action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv",
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv",
+        rest = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
+    output:
+        statistics = "output/{project}/{animal_id}/{cell_name}/vm_statistics.csv"
+    conda: "env/mne.yml"
+    script: "python/vm_statistics.py"

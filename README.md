@@ -64,9 +64,9 @@ detected episodes for now.
 - [ ] compare movement on/off
   - [x] number of episodes
   - [x] episode length
-  - [ ] mean vm
-  - [ ] vm sd
-  - [ ] AP
+  - [x] mean vm
+  - [x] vm sd
+  - [x] AP
 - [ ] correlation report html
 - [ ] kursinio planas
 - [ ] frequency analysis (movement on / movement off)

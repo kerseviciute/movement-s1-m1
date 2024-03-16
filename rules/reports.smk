@@ -72,6 +72,9 @@ rule report_movement_vs_rest:
             sid = samples["Location"]),
         action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
             project = config["project"],
+            sid = samples["Location"]),
+        statistics = expand("output/{project}/{sid}/vm_statistics.csv",
+            project = config["project"],
             sid = samples["Location"])
     output:
         report = "{deploy_directory}/movement_vs_rest.html"

@@ -33,6 +33,13 @@ ap <- foreach(file = snakemake@input$action_potentials, .combine = rbind) %do% {
     .[ , SID := sid ]
 }
 
+stats <- foreach(file = snakemake@input$statistics, .combine = rbind) %do% {
+  sid <- gsub(file, pattern = ".*(W./C.*)/vm_statistics.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
+  fread(file) %>%
+    .[ , SID := sid ]
+} %>%
+  merge(samples, by = "SID")
+
 stopifnot(all(samples[ , SID ] %in% movement[ , unique(SID) ]))
 stopifnot(all(movement[ , unique(SID) ] %in% samples[ , SID ]))
 
@@ -42,6 +49,76 @@ stopifnot(all(rest[ , unique(SID) ] %in% samples[ , SID ]))
 # The opposite is not always true as some samples do not have
 # any action potentials
 stopifnot(all(ap[ , unique(SID) ] %in% samples[ , SID ]))
+
+stopifnot(all(samples[ , SID ] %in% stats[ , unique(SID) ]))
+stopifnot(all(stats[ , unique(SID) ] %in% samples[ , SID ]))
+```
+
+```{r}
+plot_statistics <- function(
+  data,
+  variable,
+  title
+) {
+  p1 <- data %>%
+    ggpaired(x = "Episode", y = variable, id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
+    xlab("") +
+    ylab(title) +
+    theme_light(base_size = 8) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  p2 <- data %>%
+    ggpaired(x = "Episode", y = variable, id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    facet_grid(~Region) +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
+    theme_light(base_size = 8) +
+    xlab("") +
+    ylab(title) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  p3 <- data %>%
+    ggpaired(x = "Episode", y = variable, id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    facet_grid(~Layer) +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
+    theme_light(base_size = 8) +
+    xlab("") +
+    ylab(title) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  p4 <- data %>%
+    ggpaired(x = "Episode", y = variable, id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    facet_grid(~Cortex) +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
+    theme_light(base_size = 8) +
+    xlab("") +
+    ylab(title) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  ggarrange(
+    ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10)),
+    ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10)),
+    nrow = 2
+  )
+}
 ```
 
 ---
@@ -63,63 +140,10 @@ counts <- rbind(
 stopifnot(all(counts[ Episode == "Movement", SID ] %in% samples[ , SID ]))
 stopifnot(all(counts[ Episode == "Rest", SID ] %in% samples[ , SID ]))
 
-p1 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  xlab("") +
-  ylab("Number of episodes") +
-  theme_light(base_size = 8) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p2 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Region) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Number of episodes") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p3 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Layer) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Number of episodes") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p4 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Cortex) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Number of episodes") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-ggarrange(
-  ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10)),
-  ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10)),
-  nrow = 2
+plot_statistics(
+  data = counts,
+  variable = "Count",
+  title = "Number of episodes"
 )
 ```
 
@@ -139,63 +163,10 @@ counts <- rbind(
 stopifnot(all(counts[ Episode == "Movement", SID ] %in% samples[ , SID ]))
 stopifnot(all(counts[ Episode == "Rest", SID ] %in% samples[ , SID ]))
 
-p1 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID", ,
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Total episode length, s") +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p2 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Region) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Total episode length, s") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p3 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Layer) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Total episode length, s") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p4 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Cortex) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Total episode length, s") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-ggarrange(
-  ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10)),
-  ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10)),
-  nrow = 2
+plot_statistics(
+  data = counts,
+  variable = "Count",
+  title = "Total episode length, s"
 )
 ```
 
@@ -215,63 +186,10 @@ counts <- rbind(
 stopifnot(all(counts[ Episode == "Movement", SID ] %in% samples[ , SID ]))
 stopifnot(all(counts[ Episode == "Rest", SID ] %in% samples[ , SID ]))
 
-p1 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID", ,
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Average episode length, s") +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p2 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Region) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Average episode length, s") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p3 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Layer) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Average episode length, s") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-p4 <- counts %>%
-  ggpaired(x = "Episode", y = "Count", id = "SID",
-           line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
-  facet_grid(~Cortex) +
-  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-  geom_point(alpha = 0.5, size = 1) +
-  stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
-  theme_light(base_size = 8) +
-  xlab("") +
-  ylab("Average episode length, s") +
-  theme(strip.background = element_rect(fill = "white")) +
-  theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
-
-ggarrange(
-  ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10)),
-  ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10)),
-  nrow = 2
+plot_statistics(
+  data = counts,
+  variable = "Count",
+  title = "Average episode length, s"
 )
 ```
 
@@ -283,60 +201,128 @@ and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
 
 ```{r, include = TRUE, warning = FALSE, fig.height = 5.6}
 counts <- rbind(movement, rest) %>%
-        .[ , Episode := ifelse(Movement == TRUE, "Movement", "Rest") ] %>%
-        merge(samples, by = "SID")
+  .[ , Episode := ifelse(Movement == TRUE, "Movement", "Rest") ] %>%
+  merge(samples, by = "SID")
 
 stopifnot(all(counts[ Episode == "Movement", SID ] %in% samples[ , SID ]))
 stopifnot(all(counts[ Episode == "Rest", SID ] %in% samples[ , SID ]))
 
 p1 <- counts %>%
-        ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
-        geom_density(alpha = 0.25) +
-        theme_light(base_size = 8) +
-        theme(legend.position = "top") +
-        xlab("Episode length, log10") +
-        ylab("Density")
+  ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
+  geom_density(alpha = 0.25) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  xlab("Episode length, log10") +
+  ylab("Density")
 
 p2 <- counts %>%
-        ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
-        facet_grid(~Region) +
-        geom_density(alpha = 0.25) +
-        theme_light(base_size = 8) +
-        theme(legend.position = "top") +
-        theme(strip.background = element_rect(fill = "white")) +
-        theme(strip.text = element_text(colour = "black")) +
-        xlab("Episode length, log10") +
-        ylab("Density")
+  ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
+  facet_grid(~Region) +
+  geom_density(alpha = 0.25) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  xlab("Episode length, log10") +
+  ylab("Density")
 
 p3 <- counts %>%
-        ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
-        facet_grid(~Layer) +
-        geom_density(alpha = 0.25) +
-        theme_light(base_size = 8) +
-        theme(legend.position = "top") +
-        theme(strip.background = element_rect(fill = "white")) +
-        theme(strip.text = element_text(colour = "black")) +
-        xlab("Episode length, log10") +
-        ylab("Density")
+  ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
+  facet_grid(~Layer) +
+  geom_density(alpha = 0.25) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  xlab("Episode length, log10") +
+  ylab("Density")
 
 p4 <- counts %>%
-        ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
-        facet_grid(~Cortex) +
-        geom_density(alpha = 0.25) +
-        theme_light(base_size = 8) +
-        theme(legend.position = "top") +
-        theme(strip.background = element_rect(fill = "white")) +
-        theme(strip.text = element_text(colour = "black")) +
-        xlab("Episode length, log10") +
-        ylab("Density")
+  ggplot(aes(x = log10(Length), color = Episode, fill = Episode)) +
+  facet_grid(~Cortex) +
+  geom_density(alpha = 0.25) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  xlab("Episode length, log10") +
+  ylab("Density")
 
 ggarrange(
-        ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10), common.legend = TRUE),
-        ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10), legend = FALSE),
-        nrow = 2,
-        heights = c(0.55, 0.45)
+  ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10), common.legend = TRUE),
+  ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10), legend = FALSE),
+  nrow = 2,
+  heights = c(0.55, 0.45)
 )
 ```
 
 **Figure 4.** Episode length distribution in movement and rest in all samples **(a)**
 and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
+
+## Average membrane potential {.unlisted .unnumbered}
+
+```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
+plot_statistics(
+  data = stats,
+  variable = "Mean",
+  title = "Average membrane potential, mV"
+)
+```
+
+**Figure 5.** Average membrane potential during movement and rest in all samples **(a)**
+and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
+
+## Average membrane potential (no AP) {.unlisted .unnumbered}
+
+```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
+plot_statistics(
+  data = stats,
+  variable = "MeanNoAP",
+  title = "Average membrane potential, mV"
+)
+```
+
+**Figure 6.** Average membrane potential (excluding episodes with AP) during movement and rest
+in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
+
+
+## Membrane potential variability {.unlisted .unnumbered}
+
+```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
+plot_statistics(
+  data = stats,
+  variable = "SD",
+  title = "Membrane potential variability, mV"
+)
+```
+
+**Figure 7.** Membrane potential variability during movement and rest
+in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
+
+
+## Membrane potential variability (no AP) {.unlisted .unnumbered}
+
+```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
+plot_statistics(
+  data = stats,
+  variable = "SDNoAP",
+  title = "Membrane potential variability, mV"
+)
+```
+
+**Figure 8.** Membrane potential variability (excluding episodes with AP) during movement and rest
+in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
+
+
+## Number of action potentials {.unlisted .unnumbered}
+
+```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
+plot_statistics(
+        data = stats,
+        variable = "NumberOfAP",
+        title = "Number of action potentials"
+)
+```
+
+**Figure 9.** Number of action potentials fired during movement and rest
+in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
