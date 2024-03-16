@@ -22,7 +22,7 @@ author: <small>`r config$report$author`</small>
 title: `r config$report$title`
 ---
 
-# Detection of action potentials in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills .unlisted .unnumbered}
+# Detection of action potentials in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills}
 
 ```{r, include = TRUE, warning = FALSE}
 actionPotentials <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {

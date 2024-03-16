@@ -22,7 +22,7 @@ author: <small>`r config$report$author`</small>
 title: `r config$report$title`
 ---
 
-# Detection of movement episodes in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills .unlisted .unnumbered}
+# Detection of movement episodes in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills}
 
 **Table 1.** Number of movement and rest episodes and their overall length in all the samples.
 
