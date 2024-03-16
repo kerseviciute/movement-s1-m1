@@ -21,7 +21,7 @@ rule report_correlation:
     conda: "../env/r.yml"
     script: "../R/render.R"
 
-rule report_preprocess:
+rule report_vm:
     input:
         samples = config["sample_sheet"],
         vm_filter = expand("output/{project}/{sid}/vm/filter.pkl",

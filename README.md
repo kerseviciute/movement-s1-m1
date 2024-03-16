@@ -83,6 +83,8 @@ detected episodes for now.
 - Decided to use differential analysis for detection of action potentials (90th percentile and any average-like
   methods will likely introduce a lot of false positives).
   - AP detection: the hell happened in W4 C15 (S1 L5)?
+- Why does the Vm continuously grow over time in some samples (e.g. W4 C11 S1 L5)? Is this some unwanted effect
+  which should be corrected for?
 
 ### Mar ?
 
