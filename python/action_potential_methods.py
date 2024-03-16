@@ -9,17 +9,20 @@ def find_onset(differential, start_index, min_value = 1):
     return index
 
 
-def find_offset(differential, start_index, max_value = 0):
+def find_offset(differential, start_index, sfreq = 20_000):
+    import numpy as np
+
     value = differential[start_index]
     index = start_index
 
+    # Rising phase - until the AP peak
     while value > 0 and index < len(differential) - 1:
         index += 1
         value = differential[index]
 
-    while value < max_value and index < len(differential) - 1:
-        index += 1
-        value = differential[index]
+    # Expand the AP duration by 2 ms after peak
+    index += round(sfreq * 0.002)
+    index = np.min([index, len(differential) - 1])
 
     return index
 

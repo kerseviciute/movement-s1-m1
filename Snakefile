@@ -69,6 +69,9 @@ rule rest:
     conda: "env/mne.yml"
     script: "python/rest.py"
 
+#
+# Detect episodes of action potentials
+#
 rule action_potential:
     input:
         vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
