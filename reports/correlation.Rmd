@@ -1,7 +1,41 @@
 ```{r, include = FALSE}
 # snakemake <- readRDS(".correlation.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(foreach)
+library(ggpubr)
+
 config <- snakemake@config
+
+samples <- fread(snakemake@input$samples) %>%
+  .[ , Region := gsub(Region, pattern = "_", replacement = " ") ] %>%
+  .[ , Region := gsub(Region, pattern = "23", replacement = "2/3") ] %>%
+  .[ , Layer := gsub(Layer, pattern = "23", replacement = "2/3") ]
+
+corr <- foreach(file = snakemake@input$correlation, .combine = cbind, .inorder = TRUE) %do% {
+  corr <- fread(file)
+  apply(corr, 2, mean)
+}
+
+sids <- foreach(file = snakemake@input$correlation, .combine = c, .inorder = TRUE) %do% {
+  gsub(file, pattern = ".*(W./C.*)/lagged_correlation.csv", replacement = "\\1") %>%
+    gsub(pattern = "/", replacement = "_")
+}
+
+colnames(corr) <- sids
+
+time <- seq(-20000, 20000 - 50, by = 50) / 20000
+
+dt <- corr %>%
+  reshape2::melt() %>%
+  as.data.table() %>%
+  setnames(c("ID", "SID", "Correlation")) %>%
+  .[ , Time := rep(time, times = length(unique(SID))) ] %>%
+  .[ , MaxCorrelation := max(abs(Correlation)), by = SID ] %>%
+  merge(samples, by = "SID")
 ```
 
 ---
@@ -9,3 +43,286 @@ date: <small>`r Sys.Date()`</small>
 author: <small>`r config$report$author`</small>
 title: `r config$report$title`
 ---
+
+# Membrane potential and EMG correlation
+
+## Lagged correlations
+
+```{r, include = TRUE, fig.height = 5.4}
+plots <- foreach(region = dt[ , unique(Region) ] %>% sort()) %do% {
+  dt[ Region == region ] %>%
+    ggplot() +
+    facet_grid(~Region) +
+    geom_line(aes(x = Time, y = Correlation, group = SID), linewidth = 0.25, color = "gray") +
+    geom_line(data = dt[ Region == region, list(Correlation = mean(Correlation)), by = Time ],
+              aes(x = Time, y = Correlation), linewidth = 0.5, color = "black") +
+    theme_light(base_size = 8) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    expand_limits(y = c(-0.1, 0.5))
+}
+
+ggarrange(
+  plotlist = plots,
+  labels = letters[ 1:4 ],
+  font.label = list(size = 9)
+)
+```
+
+**Figure 1.** Average membrane potential and EMG recording correlations in individual recordings (gray) and
+all recordings from the same area (black).
+
+```{r, include = TRUE, fig.height = 2.8}
+# TODO: insert test for offset from zero!
+
+p1 <- dt[ ,
+  list(Correlation = mean(Correlation)),
+  by = list(Time, Region)
+] %>%
+  ggplot() +
+  geom_line(aes(x = Time, y = Correlation, color = Region), linewidth = 0.5) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  guides(color = guide_legend(nrow = 2, byrow = TRUE))
+
+p2 <- dt[ ,
+  list(Correlation = mean(Correlation)),
+  by = list(Time, Layer)
+] %>%
+  ggplot() +
+  geom_line(aes(x = Time, y = Correlation, color = Layer), linewidth = 0.5) +
+  theme_light(base_size = 8) +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  theme(legend.position = "top")
+
+p3 <- dt[ ,
+  list(Correlation = mean(Correlation)),
+  by = list(Time, Cortex)
+] %>%
+  ggplot() +
+  geom_line(aes(x = Time, y = Correlation, color = Cortex), linewidth = 0.5) +
+  theme_light(base_size = 8) +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  theme(legend.position = "top")
+
+ggarrange(
+  p1, p2, p3,
+  nrow = 1,
+  labels = letters[ 1:3 ],
+  font.label = list(size = 9)
+)
+```
+
+**Figure 2.** Average membrane potential and EMG recording correlations in all regions **(a)**,
+different layers **(b)**, and different cortices **(c)**.
+
+<br>
+<br>
+
+## Correlation peak time
+
+```{r, include = TRUE, warning = FALSE, fig.height = 2.8}
+p1 <- dt %>%
+  .[ Correlation == MaxCorrelation ] %>%
+  ggplot(aes(x = Region, y = Time)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(size = 0.5, alpha = 0.5, color = "black", height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(
+      c("M1 L2/3", "M1 L5"),
+      c("S1 L2/3", "S1 L5"),
+      c("M1 L2/3", "S1 L2/3"),
+      c("M1 L2/3", "S1 L5"),
+      c("M1 L5", "S1 L2/3"),
+      c("M1 L5", "S1 L5")
+    ),
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+p2 <- dt %>%
+  .[ Correlation == MaxCorrelation ] %>%
+  ggplot(aes(x = Layer, y = Time)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(aes(color = Cortex), size = 1, height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(c("L2/3", "L5")),
+    size = 2.5,
+    method = "wilcox.test"
+  ) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+p3 <- dt %>%
+  .[ Correlation == MaxCorrelation ] %>%
+  ggplot(aes(x = Cortex, y = Time)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(aes(color = Layer), size = 1, height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(c("M1", "S1")),
+    size = 2.5,
+    method = "wilcox.test"
+  ) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+ggarrange(
+  p1, p2, p3,
+  nrow = 1,
+  labels = letters[ 1:3 ],
+  font.label = list(size = 9),
+  widths = c(0.5, 0.25, 0.25)
+)
+```
+
+**Figure 3.** Correlation peak time in all regions **(a)**, different layers **(b)**, and
+different cortices **(c)**.
+
+<br>
+<br>
+
+## Maximum correlation
+
+```{r, include = TRUE, warning = FALSE, fig.height = 2.8}
+p1 <- dt %>%
+  .[ Correlation == MaxCorrelation ] %>%
+  ggplot(aes(x = Region, y = Correlation)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(size = 0.5, alpha = 0.5, color = "black", height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(
+      c("M1 L2/3", "M1 L5"),
+      c("S1 L2/3", "S1 L5"),
+      c("M1 L2/3", "S1 L2/3"),
+      c("M1 L2/3", "S1 L5"),
+      c("M1 L5", "S1 L2/3"),
+      c("M1 L5", "S1 L5")
+    ),
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+p2 <- dt %>%
+  .[ Correlation == MaxCorrelation ] %>%
+  ggplot(aes(x = Layer, y = Correlation)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(aes(color = Cortex), size = 1, height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(c("L2/3", "L5")),
+    size = 2.5,
+    method = "wilcox.test"
+  ) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+p3 <- dt %>%
+  .[ Correlation == MaxCorrelation ] %>%
+  ggplot(aes(x = Cortex, y = Correlation)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(aes(color = Layer), size = 1, height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(c("M1", "S1")),
+    size = 2.5,
+    method = "wilcox.test"
+  ) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+ggarrange(
+  p1, p2, p3,
+  nrow = 1,
+  labels = letters[ 1:3 ],
+  font.label = list(size = 9),
+  widths = c(0.5, 0.25, 0.25)
+)
+```
+
+**Figure 4.** Correlation peak time in all regions **(a)**, different layers **(b)**, and
+different cortices **(c)**.
+
+<br>
+<br>
+
+## Non-lagged correlation
+
+```{r, include = TRUE, warning = FALSE, fig.height = 2.8}
+p1 <- dt %>%
+  .[ Time == 0 ] %>%
+  ggplot(aes(x = Region, y = Correlation)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(size = 0.5, alpha = 0.5, color = "black", height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(
+      c("M1 L2/3", "M1 L5"),
+      c("S1 L2/3", "S1 L5"),
+      c("M1 L2/3", "S1 L2/3"),
+      c("M1 L2/3", "S1 L5"),
+      c("M1 L5", "S1 L2/3"),
+      c("M1 L5", "S1 L5")
+    ),
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+p2 <- dt %>%
+  .[ Time == 0 ] %>%
+  ggplot(aes(x = Layer, y = Correlation)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(aes(color = Cortex), size = 1, height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(c("L2/3", "L5")),
+    size = 2.5,
+    method = "wilcox.test"
+  ) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+p3 <- dt %>%
+  .[ Time == 0 ] %>%
+  ggplot(aes(x = Cortex, y = Correlation)) +
+  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
+  geom_jitter(aes(color = Layer), size = 1, height = 0, width = 0.25) +
+  stat_compare_means(
+    comparisons = list(c("M1", "S1")),
+    size = 2.5,
+    method = "wilcox.test"
+  ) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  theme(legend.margin = margin(0, 0, 0, 0)) +
+  theme(legend.box.margin = margin(-5, 0, -5, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+ggarrange(
+  p1, p2, p3,
+  nrow = 1,
+  labels = letters[ 1:3 ],
+  font.label = list(size = 9),
+  widths = c(0.5, 0.25, 0.25)
+)
+```
+
+**Figure 5.** Correlation at 0 time point in all regions **(a)**, different layers **(b)**, and
+different cortices **(c)**.
