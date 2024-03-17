@@ -1,0 +1,48 @@
+## `r animalId` `r cellName` {.unlisted .unnumbered}
+
+```{python}
+prefix = f'{r.prefix}/{r.animalId}/{r.cellName}'
+
+raw = pd.read_pickle(f'{prefix}/emg/raw.pkl')
+data = pd.read_pickle(f'{prefix}/emg/filter.pkl')
+movement = pd.read_csv(f'{prefix}/movement_episodes.csv')
+rest = pd.read_csv(f'{prefix}/rest_episodes.csv')
+```
+
+```{python, include = TRUE}
+plot_all_events(data, channels = data.ch_names, movement = movement, no_movement = rest, limit = [-10, 10])
+```
+
+**Figure 1.** All detected movement and rest episodes. Movement episodes are marked in **red**,
+rest episodes are marked in **blue**.
+
+```{python, include = FALSE}
+raw.filter(l_freq = 2, h_freq = None, fir_design = "firwin", picks = "emg")
+sample_data = raw.get_data()
+
+episode_data = []
+
+for i, episode in movement.iterrows():
+    if episode["EventStart"] < 500:
+        continue
+
+    start = episode["EventStart"] - 500
+    end = episode["EventStart"] + 1000
+    channel = episode["Channel"]
+
+    episode_data.append(sample_data[channel][start:end])
+
+episode_data = np.array(episode_data)
+x = np.arange(-500, 1000, 1) / raw.info["sfreq"]
+```
+
+```{python, include = TRUE}
+for episode in episode_data:
+    plt.plot(x, episode, c = "lightgray", linewidth = 0.5)
+
+episode_data_mean = np.mean(np.abs(episode_data), axis = 0)
+
+plt.axvline(x = 0, linestyle = "-")
+plt.plot(x, episode_data_mean * 10, c = "black", linewidth = 0.75)
+plt.show()
+```

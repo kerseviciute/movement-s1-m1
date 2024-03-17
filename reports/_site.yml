@@ -1,0 +1,43 @@
+name: movement-s1-m1
+navbar:
+  title: Movement in S1 and M1
+  left:
+    - text: Home
+      icon: fa-home
+      href: index.html
+    - text: Correlation
+      href: correlation.html
+    - text: S1 L2/3
+      menu:
+      - text: AP detection
+        href: vm_S1_L23.html
+      - text: Movement detection
+        href: emg_S1_L23.html
+    - text: S1 L5
+      menu:
+        - text: AP detection
+          href: vm_S1_L5.html
+        - text: Movement detection
+          href: emg_S1_L5.html
+    - text: M1 L2/3
+      menu:
+        - text: AP detection
+          href: vm_M1_L23.html
+        - text: Movement detection
+          href: emg_M1_L23.html
+    - text: M1 L5
+      menu:
+        - text: AP detection
+          href: vm_M1_L5.html
+        - text: Movement detection
+          href: emg_M1_L5.html
+    - text: Movement vs Rest
+      href: movement_vs_rest.html
+output:
+  html_document:
+    self_contained: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: true

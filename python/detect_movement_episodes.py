@@ -1,3 +1,17 @@
+def filter_emg(data, low_freq = 100, sfreq = 20_000):
+    from scipy import signal
+    import numpy as np
+
+    butter_filter = signal.butter(
+        N = 20,
+        Wn = [ low_freq ],
+        btype = "lowpass",
+        output = "sos",
+        fs = sfreq
+    )
+
+    return signal.sosfiltfilt(butter_filter, np.abs(data))
+
 def merge_close_events(dt, min_break):
     import pandas as pd
 
@@ -44,6 +58,31 @@ def detect_movement_episodes(signal, threshold, sfreq, min_break = 500):
     movement_data["Movement"] = signal_over_threshold[movement_data["EventStart"]]
     movement_data = movement_data[movement_data["Movement"]]
     movement_data["EventLength"] = list(movement_data["EventEnd"] - movement_data["EventStart"])
+
+    movement_data = merge_close_events(movement_data, min_break = min_break)
+
+    movement_data["Start"] = movement_data["EventStart"] / sfreq
+    movement_data["End"] = movement_data["EventEnd"] / sfreq
+    movement_data["Length"] = movement_data["EventLength"] / sfreq
+
+    return movement_data
+
+def detect_rest_episodes(signal, threshold, sfreq, min_break, min_length):
+    import numpy as np
+    import pandas as pd
+
+    signal_over_threshold = np.abs(signal) > threshold
+    change_indices = np.where(np.diff(signal_over_threshold))[0]
+
+    movement_data = pd.DataFrame({
+        "EventStart": np.insert(change_indices + 1, 0, 0),
+        "EventEnd": np.append(change_indices + 1, len(signal_over_threshold))
+    })
+
+    movement_data["Movement"] = signal_over_threshold[movement_data["EventStart"]]
+    movement_data = movement_data[ movement_data["Movement"] == False ]
+    movement_data["EventLength"] = list(movement_data["EventEnd"] - movement_data["EventStart"])
+    movement_data = movement_data[movement_data["EventLength"] >= min_length]
 
     movement_data = merge_close_events(movement_data, min_break = min_break)
 
