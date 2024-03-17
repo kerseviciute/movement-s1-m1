@@ -38,6 +38,19 @@ dt <- corr %>%
   merge(samples, by = "SID")
 ```
 
+```{r}
+offsetSignificance <- function(x) {
+  res <- t.test(x, mu = 0, alternative = "two.sided")
+
+  symnum(
+    res$p.value,
+    symbols = c("***", "**", "*", ".", "n.s."),
+    cutpoints = c(0, .001, .01, .05, .1, 1),
+    corr = FALSE
+  )
+}
+```
+
 ---
 date: <small>`r Sys.Date()`</small>
 author: <small>`r config$report$author`</small>
@@ -72,8 +85,19 @@ ggarrange(
 **Figure 1.** Average membrane potential and EMG recording correlations in individual recordings (gray) and
 all recordings from the same area (black).
 
-```{r, include = TRUE, fig.height = 2.8}
-# TODO: insert test for offset from zero!
+```{r, include = TRUE, fig.height = 3.2, message = FALSE}
+annotation <- data.table(
+  Region = c("S1 L2/3", "M1 L2/3", "M1 L5", "S1 L5"),
+  Significance = c(
+    offsetSignificance(dt[ Region == "S1 L2/3" ][ Correlation == MaxCorrelation, Time ]),
+    offsetSignificance(dt[ Region == "M1 L2/3" ][ Correlation == MaxCorrelation, Time ]),
+    offsetSignificance(dt[ Region == "M1 L5" ][ Correlation == MaxCorrelation, Time ]),
+    offsetSignificance(dt[ Region == "S1 L5" ][ Correlation == MaxCorrelation, Time ])
+  )
+) %>%
+  merge(dt[ , list(Correlation = mean(Correlation)), by = list(Time, Region) ], by = "Region") %>%
+  .[ , MaxCorrelation := max(Correlation), by = Region ] %>%
+  .[ Correlation == MaxCorrelation ]
 
 p1 <- dt[ ,
   list(Correlation = mean(Correlation)),
@@ -81,11 +105,25 @@ p1 <- dt[ ,
 ] %>%
   ggplot() +
   geom_line(aes(x = Time, y = Correlation, color = Region), linewidth = 0.5) +
+  geom_text(data = annotation, aes(x = Time, y = Correlation + 0.005, label = Significance)) +
   theme_light(base_size = 8) +
   theme(legend.position = "top") +
   theme(legend.margin = margin(0, 0, 0, 0)) +
   theme(legend.box.margin = margin(-5, 0, -5, 0)) +
-  guides(color = guide_legend(nrow = 2, byrow = TRUE))
+  guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+  expand_limits(y = c(0, 0.4))
+
+
+annotation <- data.table(
+  Layer = c("L2/3", "L5"),
+  Significance = c(
+    offsetSignificance(dt[ Layer == "L2/3" ][ Correlation == MaxCorrelation, Time ]),
+    offsetSignificance(dt[ Layer == "L5" ][ Correlation == MaxCorrelation, Time ])
+  )
+) %>%
+  merge(dt[ , list(Correlation = mean(Correlation)), by = list(Time, Layer) ], by = "Layer") %>%
+  .[ , MaxCorrelation := max(Correlation), by = Layer ] %>%
+  .[ Correlation == MaxCorrelation ]
 
 p2 <- dt[ ,
   list(Correlation = mean(Correlation)),
@@ -93,10 +131,23 @@ p2 <- dt[ ,
 ] %>%
   ggplot() +
   geom_line(aes(x = Time, y = Correlation, color = Layer), linewidth = 0.5) +
+  geom_text(data = annotation, aes(x = Time, y = Correlation + 0.005, label = Significance)) +
   theme_light(base_size = 8) +
   theme(legend.margin = margin(0, 0, 0, 0)) +
   theme(legend.box.margin = margin(-5, 0, -5, 0)) +
-  theme(legend.position = "top")
+  theme(legend.position = "top") +
+  expand_limits(y = c(0, 0.4))
+
+annotation <- data.table(
+  Cortex = c("S1", "M1"),
+  Significance = c(
+    offsetSignificance(dt[ Cortex == "S1" ][ Correlation == MaxCorrelation, Time ]),
+    offsetSignificance(dt[ Cortex == "M1" ][ Correlation == MaxCorrelation, Time ])
+  )
+) %>%
+  merge(dt[ , list(Correlation = mean(Correlation)), by = list(Time, Cortex) ], by = "Cortex") %>%
+  .[ , MaxCorrelation := max(Correlation), by = Cortex ] %>%
+  .[ Correlation == MaxCorrelation ]
 
 p3 <- dt[ ,
   list(Correlation = mean(Correlation)),
@@ -104,10 +155,12 @@ p3 <- dt[ ,
 ] %>%
   ggplot() +
   geom_line(aes(x = Time, y = Correlation, color = Cortex), linewidth = 0.5) +
+  geom_text(data = annotation, aes(x = Time, y = Correlation + 0.005, label = Significance)) +
   theme_light(base_size = 8) +
   theme(legend.margin = margin(0, 0, 0, 0)) +
   theme(legend.box.margin = margin(-5, 0, -5, 0)) +
-  theme(legend.position = "top")
+  theme(legend.position = "top") +
+  expand_limits(y = c(0, 0.4))
 
 ggarrange(
   p1, p2, p3,
@@ -118,7 +171,8 @@ ggarrange(
 ```
 
 **Figure 2.** Average membrane potential and EMG recording correlations in all regions **(a)**,
-different layers **(b)**, and different cortices **(c)**.
+different layers **(b)**, and different cortices **(c)**. The significance levels indicate whether
+the peak correlation time point is different from 0 seconds (one-sample t-test).
 
 <br>
 <br>
@@ -134,11 +188,16 @@ p1 <- dt %>%
   stat_compare_means(
     comparisons = list(
       c("M1 L2/3", "M1 L5"),
-      c("S1 L2/3", "S1 L5"),
-      c("M1 L2/3", "S1 L2/3"),
-      c("M1 L2/3", "S1 L5"),
       c("M1 L5", "S1 L2/3"),
-      c("M1 L5", "S1 L5")
+      c("M1 L2/3", "S1 L2/3"),
+      c("M1 L5", "S1 L5"),
+      c("M1 L2/3", "S1 L5")
+    ),
+    size = 2.5
+  ) +
+  stat_compare_means(
+    comparisons = list(
+      c("S1 L2/3", "S1 L5")
     ),
     size = 2.5
   ) +
@@ -203,11 +262,16 @@ p1 <- dt %>%
   stat_compare_means(
     comparisons = list(
       c("M1 L2/3", "M1 L5"),
-      c("S1 L2/3", "S1 L5"),
-      c("M1 L2/3", "S1 L2/3"),
-      c("M1 L2/3", "S1 L5"),
       c("M1 L5", "S1 L2/3"),
-      c("M1 L5", "S1 L5")
+      c("M1 L2/3", "S1 L2/3"),
+      c("M1 L5", "S1 L5"),
+      c("M1 L2/3", "S1 L5")
+    ),
+    size = 2.5
+  ) +
+  stat_compare_means(
+    comparisons = list(
+      c("S1 L2/3", "S1 L5")
     ),
     size = 2.5
   ) +
@@ -272,11 +336,16 @@ p1 <- dt %>%
   stat_compare_means(
     comparisons = list(
       c("M1 L2/3", "M1 L5"),
-      c("S1 L2/3", "S1 L5"),
-      c("M1 L2/3", "S1 L2/3"),
-      c("M1 L2/3", "S1 L5"),
       c("M1 L5", "S1 L2/3"),
-      c("M1 L5", "S1 L5")
+      c("M1 L2/3", "S1 L2/3"),
+      c("M1 L5", "S1 L5"),
+      c("M1 L2/3", "S1 L5")
+    ),
+    size = 2.5
+  ) +
+  stat_compare_means(
+    comparisons = list(
+      c("S1 L2/3", "S1 L5")
     ),
     size = 2.5
   ) +

@@ -85,6 +85,8 @@ detected episodes for now.
   - AP detection: the hell happened in W4 C15 (S1 L5)?
 - Why does the Vm continuously grow over time in some samples (e.g. W4 C11 S1 L5)? Is this some unwanted effect
   which should be corrected for?
+- Combining S1 layers into a single group seems anti-productive since there are significant differences in the
+  correlation patterns between the layers L2/3 and L5 of S1 (not seen in M1, though).
 
 ### Mar ?
 
