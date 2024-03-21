@@ -5,7 +5,7 @@ import pandas as pd
 pd.to_pickle(snakemake, ".movement.py.pkl")
 # snakemake = pd.read_pickle(".movement.py.pkl")
 
-with open(f"{snakemake.scriptdir}/detect_movement_episodes.py", "r") as file:
+with open(f"{snakemake.scriptdir}/movement_methods.py", "r") as file:
     exec(file.read())
 
 data = pd.read_pickle(snakemake.input["data"])
@@ -15,12 +15,17 @@ min_break = data.info["sfreq"] * snakemake.params["maxTimeApart"]
 min_event_length = data.info["sfreq"] * snakemake.params["minEventLength"]
 percentile = snakemake.params["percentile"]
 
+filtered_data = []
+for channel in sample_data:
+    filtered_data.append(filter_emg(channel, low_freq = 20, sfreq = data.info["sfreq"]))
+filtered_data = np.array(filtered_data)
+
 threshold = np.percentile(np.abs(sample_data), percentile)
 
 episodes = []
 
 for i, _ in enumerate(data.ch_names):
-    signal = sample_data[i]
+    signal = filtered_data[i]
 
     ch_episodes = detect_movement_episodes(
         signal = signal,
@@ -32,9 +37,9 @@ for i, _ in enumerate(data.ch_names):
     episodes.append(ch_episodes)
 
 episodes = pd.concat(episodes)
-episodes = episodes.reset_index(drop = True)
-
 episodes = episodes[ episodes["EventLength"] > min_event_length ]
+
+episodes = episodes.reset_index(drop = True)
 
 print(f"Number of detected movement episodes: {len(episodes)}")
 

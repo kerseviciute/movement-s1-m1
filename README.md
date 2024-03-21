@@ -36,7 +36,7 @@ conda activate snakemake
 3. Run ``snakemake``:
 
 ```shell
-snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime --cores 1 -p all
+snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime params --cores 1 -p all
 ```
 
 ## TODO
@@ -78,13 +78,15 @@ detected episodes for now.
   - AP detection: the hell happened in W4 C15 (S1 L5)?
 - Why does the Vm continuously grow over time in some samples (e.g. W4 C11 S1 L5)? Is this some unwanted effect
   which should be corrected for?
-- Combining S1 layers into a single group seems anti-productive since there are significant differences in the
+- Combining S1 layers into a single group seems counter-productive since there are significant differences in the
   correlation patterns between the layers L2/3 and L5 of S1 (not seen in M1, though).
 
 ### Mar 20
 
 - [ ] fix correlation report (max corr, non absolute for test)
-- [ ] use low pass filtered data for detection
+- [x] Use low-pass filtered data for movement / rest episode detection
+  - [x] Do any movement / rest episodes overlap?
+- [ ] Fix statistics in the movement vs rest comparison report (need to correct for time)
 - [ ] dying cells
 - [ ] frequency analysis (movement on / movement off)
 - [ ] mixed effects models for time?
@@ -94,6 +96,10 @@ detected episodes for now.
   - [ ] correlation analysis
   - [ ] EMG (filtering + movement detection)
   - [ ] Vm (filtering + AP detection)
+
+**To discuss**
+- Detection of movement / rest episodes was performed using the low-pass filtered EMG data. Included
+  a check to make sure none of detected movement and rest episodes overlap.
 
 ### Mar ?
 
