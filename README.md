@@ -68,13 +68,6 @@ detected episodes for now.
   - [x] vm sd
   - [x] AP
 - [x] correlation report html
-- [ ] kursinio planas
-- [ ] frequency analysis (movement on / movement off)
-- [ ] add method descriptions to reports
-  - [ ] index (how to use the website)
-  - [ ] correlation analysis
-  - [ ] EMG (filtering + movement detection)
-  - [ ] Vm (filtering + AP detection)
 
 **To discuss**
 - Filtering had to be changed because heart beat was disturbing to the rest period detection. In some cases, it
@@ -87,6 +80,20 @@ detected episodes for now.
   which should be corrected for?
 - Combining S1 layers into a single group seems anti-productive since there are significant differences in the
   correlation patterns between the layers L2/3 and L5 of S1 (not seen in M1, though).
+
+### Mar 20
+
+- [ ] fix correlation report (max corr, non absolute for test)
+- [ ] use low pass filtered data for detection
+- [ ] dying cells
+- [ ] frequency analysis (movement on / movement off)
+- [ ] mixed effects models for time?
+- [ ] kursinio planas
+- [ ] add method descriptions to reports
+  - [ ] index (how to use the website)
+  - [ ] correlation analysis
+  - [ ] EMG (filtering + movement detection)
+  - [ ] Vm (filtering + AP detection)
 
 ### Mar ?
 
