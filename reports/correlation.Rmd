@@ -29,12 +29,16 @@ colnames(corr) <- sids
 
 time <- seq(-20000, 20000 - 50, by = 50) / 20000
 
+maxCorrelation <- function(x) {
+  x[ which.max(abs(x)) ]
+}
+
 dt <- corr %>%
   reshape2::melt() %>%
   as.data.table() %>%
   setnames(c("ID", "SID", "Correlation")) %>%
   .[ , Time := rep(time, times = length(unique(SID))) ] %>%
-  .[ , MaxCorrelation := max(abs(Correlation)), by = SID ] %>%
+  .[ , MaxCorrelation := maxCorrelation(Correlation), by = SID ] %>%
   merge(samples, by = "SID")
 ```
 
@@ -96,7 +100,7 @@ annotation <- data.table(
   )
 ) %>%
   merge(dt[ , list(Correlation = mean(Correlation)), by = list(Time, Region) ], by = "Region") %>%
-  .[ , MaxCorrelation := max(Correlation), by = Region ] %>%
+  .[ , MaxCorrelation := maxCorrelation(Correlation), by = Region ] %>%
   .[ Correlation == MaxCorrelation ]
 
 p1 <- dt[ ,
@@ -122,7 +126,7 @@ annotation <- data.table(
   )
 ) %>%
   merge(dt[ , list(Correlation = mean(Correlation)), by = list(Time, Layer) ], by = "Layer") %>%
-  .[ , MaxCorrelation := max(Correlation), by = Layer ] %>%
+  .[ , MaxCorrelation := maxCorrelation(Correlation), by = Layer ] %>%
   .[ Correlation == MaxCorrelation ]
 
 p2 <- dt[ ,
@@ -146,7 +150,7 @@ annotation <- data.table(
   )
 ) %>%
   merge(dt[ , list(Correlation = mean(Correlation)), by = list(Time, Cortex) ], by = "Cortex") %>%
-  .[ , MaxCorrelation := max(Correlation), by = Cortex ] %>%
+  .[ , MaxCorrelation := maxCorrelation(Correlation), by = Cortex ] %>%
   .[ Correlation == MaxCorrelation ]
 
 p3 <- dt[ ,

@@ -83,7 +83,7 @@ detected episodes for now.
 
 ### Mar 20
 
-- [ ] fix correlation report (max corr, non absolute for test)
+- [x] Fix correlation report (max corr, non absolute for test)
 - [x] Use low-pass filtered data for movement / rest episode detection
   - [x] Do any movement / rest episodes overlap?
 - [ ] Fix statistics in the movement vs rest comparison report (need to correct for time)
