@@ -40,6 +40,7 @@ episodes = pd.concat(episodes)
 episodes = episodes[ episodes["EventLength"] > min_event_length ]
 
 episodes = episodes.reset_index(drop = True)
+episodes["ID"] = [ "M" + str(index) for index in episodes.index ]
 
 print(f"Number of detected movement episodes: {len(episodes)}")
 

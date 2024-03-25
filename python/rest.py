@@ -44,6 +44,7 @@ episodes = pd.concat(episodes)
 episodes = episodes[ episodes["EventLength"] > min_event_length ]
 
 episodes = episodes.reset_index(drop = True)
+episodes["ID"] = [ "R" + str(index) for index in episodes.index ]
 
 print(f"Number of detected rest episodes: {len(episodes)}")
 

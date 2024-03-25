@@ -86,10 +86,10 @@ detected episodes for now.
 - [x] Fix correlation report (max corr, non absolute for test)
 - [x] Use low-pass filtered data for movement / rest episode detection
   - [x] Do any movement / rest episodes overlap?
-- [ ] Fix statistics in the movement vs rest comparison report (need to correct for time)
+- [x] Fix statistics in the movement vs rest comparison report (need to correct for time)
+- [x] mixed effects models for time?
 - [ ] dying cells
 - [ ] frequency analysis (movement on / movement off)
-- [ ] mixed effects models for time?
 - [ ] kursinio planas
 - [ ] add method descriptions to reports
   - [ ] index (how to use the website)
@@ -100,6 +100,9 @@ detected episodes for now.
 **To discuss**
 - Detection of movement / rest episodes was performed using the low-pass filtered EMG data. Included
   a check to make sure none of detected movement and rest episodes overlap.
+- Fitted more complex models that account for episode length and episode onset time.
+  Is this enough to account for the effect seen in continuous membrane potential increase?
+  Or should I still cut and remove the data?
 
 ### Mar ?
 

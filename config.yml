@@ -29,7 +29,7 @@ detect:
     minReachedVoltage: -25
 
 report:
-  author: Ieva Kerseviciute
+  author: Ieva Kerševičiūtė
   title: Movement in S1 and M1
   pages:
     - index

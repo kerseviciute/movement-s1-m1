@@ -6,6 +6,9 @@ library(dplyr)
 library(foreach)
 library(ggplot2)
 library(ggpubr)
+library(lme4)
+library(lmerTest)
+library(scales)
 
 config <- snakemake@config
 
@@ -38,7 +41,12 @@ stats <- foreach(file = snakemake@input$statistics, .combine = rbind) %do% {
   fread(file) %>%
     .[ , SID := sid ]
 } %>%
-  merge(samples, by = "SID")
+  merge(samples, by = "SID") %>%
+  merge(rbind(movement, rest), by = c("ID", "SID")) %>%
+  .[ , Start := Channel * 10 + Start ] %>%
+  .[ , End := Channel * 10 + End ] %>%
+  .[ , Episode := ifelse(Movement, "Movement", "Rest") %>% factor() ] %>%
+  .[ , SID := factor(SID) ]
 
 stopifnot(all(samples[ , SID ] %in% movement[ , unique(SID) ]))
 stopifnot(all(movement[ , unique(SID) ] %in% samples[ , SID ]))
@@ -106,6 +114,149 @@ plot_statistics <- function(
     geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
     geom_point(alpha = 0.5, size = 1) +
     stat_compare_means(comparisons = list(c("Movement", "Rest")), paired = TRUE, size = 2.5) +
+    theme_light(base_size = 8) +
+    xlab("") +
+    ylab(title) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  ggarrange(
+    ggarrange(p1, p2, widths = c(0.3, 0.7), labels = letters[ 1:2 ], font.label = list(size = 10)),
+    ggarrange(p3, p4, labels = letters[ 3:4 ], font.label = list(size = 10)),
+    nrow = 2
+  )
+}
+
+fitModel <- function(data) {
+  model.full <- lme4::lmer(
+    variable ~ Episode + Start + Length + (1 + Episode | SID),
+    data = data, REML = TRUE
+  )
+
+  model.null <- lme4::lmer(
+    variable ~ Start + Length + (1 + Episode | SID),
+    data = data, REML = TRUE
+  )
+
+  list(
+    p.value = anova(model.full, model.null)$`Pr(>Chisq)`[ 2 ],
+    estimate = model.full %>%
+      summary() %>%
+      coef() %>%
+      as.data.table(keep.rownames = "FixedEffect")
+      %>%
+      .[ FixedEffect == "EpisodeRest", Estimate ]
+  )
+}
+
+evaluateSignificance <- function(data, variable, compare = c("Layer", "Cortex", "Region", "All")) {
+  data <- copy(data)
+  data <- setnames(data, variable, "variable")
+
+  data <- switch(
+    compare,
+    "Layer" = {
+      data[ , list(SID, Layer, variable, Episode, Start, Length) ] %>%
+        setnames("Layer", "Region")
+    },
+    "Cortex" = {
+      data[ , list(SID, Cortex, variable, Episode, Start, Length) ] %>%
+        setnames("Cortex", "Region")
+    },
+    "Region" = {
+      data[ , list(SID, Region, variable, Episode, Start, Length) ]
+    },
+    "All" = {
+      data[ , list(SID, Region, variable, Episode, Start, Length) ] %>%
+        .[ , Region := "All" ]
+    }
+  )
+
+  foreach(region = data[ , unique(Region) ], .combine = rbind) %do% {
+    dt <- data %>%
+      .[ Region == region ]
+    fit <- fitModel(dt)
+
+    dt <- dt %>%
+      .[ , list(variable = mean(variable), Region), by = list(SID, Episode) ]
+
+    data.table(
+      Region = region,
+      group1 = "Movement",
+      group2 = "Rest",
+      p = ifelse(fit$p.value < 0.001, scientific(fit$p.value), round(fit$p.value, 3)),
+      estimate = fit$estimate,
+      y.position = dt[ , max(variable) ] + dt[ , abs(max(variable)) ] * 0.1
+    )
+  } %>%
+    .[ , y.position := max(y.position) ] %>%
+    setnames("Region", compare) %>%
+    .[ ]
+}
+
+plot_statistics_fit <- function(
+  data,
+  variable,
+  title
+) {
+  fitAll <- evaluateSignificance(data, variable, "All")
+  fitLayer <- evaluateSignificance(data, variable, "Layer")
+  fitCortex <- evaluateSignificance(data, variable, "Cortex")
+  fitRegion <- evaluateSignificance(data, variable, "Region")
+
+  data <- data %>%
+    copy() %>%
+    setnames(variable, "variable") %>%
+    .[ , list(variable = mean(variable), Cortex, Layer, Region), by = list(SID, Episode) ] %>%
+    unique()
+
+  p1 <- data %>%
+    ggpaired(x = "Episode", y = "variable", id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_pvalue_manual(fitAll, size = 2.5) +
+    xlab("") +
+    ylab(title) +
+    theme_light(base_size = 8) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  p2 <- data %>%
+    ggpaired(x = "Episode", y = "variable", id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    facet_grid(~Region) +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_pvalue_manual(fitRegion, size = 2.5) +
+    theme_light(base_size = 8) +
+    xlab("") +
+    ylab(title) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  p3 <- data %>%
+    ggpaired(x = "Episode", y = "variable", id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    facet_grid(~Layer) +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_pvalue_manual(fitLayer, size = 2.5) +
+    theme_light(base_size = 8) +
+    xlab("") +
+    ylab(title) +
+    theme(strip.background = element_rect(fill = "white")) +
+    theme(strip.text = element_text(colour = "black")) +
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+  p4 <- data %>%
+    ggpaired(x = "Episode", y = "variable", id = "SID",
+             line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
+    facet_grid(~Cortex) +
+    geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+    geom_point(alpha = 0.5, size = 1) +
+    stat_pvalue_manual(fitCortex, size = 2.5) +
     theme_light(base_size = 8) +
     xlab("") +
     ylab(title) +
@@ -261,8 +412,8 @@ and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
 
 ## Average membrane potential {.unlisted .unnumbered}
 
-```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
-plot_statistics(
+```{r, include = TRUE, warning = FALSE, message = FALSE, fig.height = 5.4}
+plot_statistics_fit(
   data = stats,
   variable = "Mean",
   title = "Average membrane potential, mV"
@@ -274,8 +425,8 @@ and grouped by region **(b)**, layer **(c)**, and cortex **(d)**.
 
 ## Average membrane potential (no AP) {.unlisted .unnumbered}
 
-```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
-plot_statistics(
+```{r, include = TRUE, warning = FALSE, message = FALSE, fig.height = 5.4}
+plot_statistics_fit(
   data = stats,
   variable = "MeanNoAP",
   title = "Average membrane potential, mV"
@@ -288,8 +439,8 @@ in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex 
 
 ## Membrane potential variability {.unlisted .unnumbered}
 
-```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
-plot_statistics(
+```{r, include = TRUE, warning = FALSE, message = FALSE, fig.height = 5.4}
+plot_statistics_fit(
   data = stats,
   variable = "SD",
   title = "Membrane potential variability, mV"
@@ -302,8 +453,8 @@ in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex 
 
 ## Membrane potential variability (no AP) {.unlisted .unnumbered}
 
-```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
-plot_statistics(
+```{r, include = TRUE, warning = FALSE, message = FALSE, fig.height = 5.4}
+plot_statistics_fit(
   data = stats,
   variable = "SDNoAP",
   title = "Membrane potential variability, mV"
@@ -316,11 +467,11 @@ in all samples **(a)** and grouped by region **(b)**, layer **(c)**, and cortex 
 
 ## Number of action potentials {.unlisted .unnumbered}
 
-```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
-plot_statistics(
-        data = stats,
-        variable = "NumberOfAP",
-        title = "Number of action potentials"
+```{r, include = TRUE, warning = FALSE, message = FALSE, fig.height = 5.4}
+plot_statistics_fit(
+  data = stats,
+  variable = "NumberOfAP",
+  title = "Number of action potentials"
 )
 ```
 
