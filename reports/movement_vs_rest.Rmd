@@ -46,7 +46,8 @@ stats <- foreach(file = snakemake@input$statistics, .combine = rbind) %do% {
   .[ , Start := Channel * 10 + Start ] %>%
   .[ , End := Channel * 10 + End ] %>%
   .[ , Episode := ifelse(Movement, "Movement", "Rest") %>% factor() ] %>%
-  .[ , SID := factor(SID) ]
+  .[ , SID := factor(SID) ] %>%
+  .[ , NumberOfAP := NumberOfAP / Length ]
 
 stopifnot(all(samples[ , SID ] %in% movement[ , unique(SID) ]))
 stopifnot(all(movement[ , unique(SID) ] %in% samples[ , SID ]))

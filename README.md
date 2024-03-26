@@ -87,14 +87,7 @@ detected episodes for now.
 - [x] Use low-pass filtered data for movement / rest episode detection
   - [x] Do any movement / rest episodes overlap?
 - [x] Fix statistics in the movement vs rest comparison report (need to correct for time)
-  - [ ] dying cells
-- [ ] frequency analysis (movement on / movement off)
-- [ ] kursinio planas
-- [ ] add method descriptions to reports
-  - [ ] index (how to use the website)
-  - [ ] correlation analysis
-  - [ ] EMG (filtering + movement detection)
-  - [x] Vm (filtering + AP detection)
+- [x] Vm methods (filtering + AP detection)
 
 **To discuss**
 - Detection of movement / rest episodes was performed using the low-pass filtered EMG data. Included
@@ -103,7 +96,14 @@ detected episodes for now.
   Is this enough to account for the effect seen in continuous membrane potential increase?
   Or should I still cut and remove the data?
 
-### Mar ?
+### Mar 26
 
+- [ ] **kursinio planas**
+- [ ] pretty graph with all samples to show that EMG onset is good
+- [ ] EMG event filtering (min time: 0.5 s, 400ms offset, 400ms onset)
+- [ ] frequency analysis (movement on / movement off): 2-100 Hz, >=0.5s
 - [ ] compare conductance during on/off
-- [ ] EMG event filtering
+- [ ] add method descriptions to reports
+  - [ ] index (how to use the website)
+  - [ ] correlation analysis
+  - [ ] EMG (filtering + movement detection)
