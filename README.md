@@ -36,7 +36,7 @@ conda activate snakemake
 3. Run ``snakemake``:
 
 ```shell
-snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime --cores 1 -p all
+snakemake --conda-frontend mamba --use-conda --rerun-triggers mtime params --cores 1 -p all
 ```
 
 ## TODO
@@ -68,13 +68,6 @@ detected episodes for now.
   - [x] vm sd
   - [x] AP
 - [x] correlation report html
-- [ ] kursinio planas
-- [ ] frequency analysis (movement on / movement off)
-- [ ] add method descriptions to reports
-  - [ ] index (how to use the website)
-  - [ ] correlation analysis
-  - [ ] EMG (filtering + movement detection)
-  - [ ] Vm (filtering + AP detection)
 
 **To discuss**
 - Filtering had to be changed because heart beat was disturbing to the rest period detection. In some cases, it
@@ -85,10 +78,32 @@ detected episodes for now.
   - AP detection: the hell happened in W4 C15 (S1 L5)?
 - Why does the Vm continuously grow over time in some samples (e.g. W4 C11 S1 L5)? Is this some unwanted effect
   which should be corrected for?
-- Combining S1 layers into a single group seems anti-productive since there are significant differences in the
+- Combining S1 layers into a single group seems counter-productive since there are significant differences in the
   correlation patterns between the layers L2/3 and L5 of S1 (not seen in M1, though).
 
-### Mar ?
+### Mar 20
 
+- [x] Fix correlation report (max corr, non absolute for test)
+- [x] Use low-pass filtered data for movement / rest episode detection
+  - [x] Do any movement / rest episodes overlap?
+- [x] Fix statistics in the movement vs rest comparison report (need to correct for time)
+- [x] Vm methods (filtering + AP detection)
+
+**To discuss**
+- Detection of movement / rest episodes was performed using the low-pass filtered EMG data. Included
+  a check to make sure none of detected movement and rest episodes overlap.
+- Fitted more complex models that account for episode length and episode onset time.
+  Is this enough to account for the effect seen in continuous membrane potential increase?
+  Or should I still cut and remove the data?
+
+### Mar 26
+
+- [ ] **kursinio planas**
+- [ ] pretty graph with all samples to show that EMG onset is good
+- [ ] EMG event filtering (min time: 0.5 s, 400ms offset, 400ms onset)
+- [ ] frequency analysis (movement on / movement off): 2-100 Hz, >=0.5s
 - [ ] compare conductance during on/off
-- [ ] EMG event filtering
+- [ ] add method descriptions to reports
+  - [ ] index (how to use the website)
+  - [ ] correlation analysis
+  - [ ] EMG (filtering + movement detection)

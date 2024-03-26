@@ -27,3 +27,33 @@ rule emg_filter:
         ch_type = "emg"
     conda: "../env/mne.yml"
     script: "../python/filter.py"
+
+#
+# Detect episodes of movement
+#
+rule movement:
+    input:
+        data = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl"
+    output:
+        episodes = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv"
+    params:
+        maxTimeApart = config["detect"]["movement"]["maxTimeApart"],
+        minEventLength = config["detect"]["movement"]["minLength"],
+        percentile = config["detect"]["movement"]["percentile"]
+    conda: "../env/mne.yml"
+    script: "../python/movement.py"
+
+#
+# Detect episodes of rest
+#
+rule rest:
+    input:
+        data = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl"
+    output:
+        episodes = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
+    params:
+        maxTimeApart = config["detect"]["rest"]["maxTimeApart"],
+        minEventLength = config["detect"]["rest"]["minLength"],
+        percentile = config["detect"]["rest"]["percentile"]
+    conda: "../env/mne.yml"
+    script: "../python/rest.py"

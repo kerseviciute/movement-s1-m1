@@ -20,3 +20,4 @@ dependencies:
   - r-cowplot 1.1.2
   - r-gridgraphics 0.5_1
   - r-openxlsx 4.2.5.2
+  - r-lmertest 3.1_3

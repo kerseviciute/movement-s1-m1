@@ -40,51 +40,7 @@ rule correlation:
     script: "python/correlation_lag.py"
 
 #
-# Detect episodes of movement
-#
-rule movement:
-    input:
-        data = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl"
-    output:
-        episodes = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv"
-    params:
-        maxTimeApart = config["detect"]["movement"]["maxTimeApart"],
-        minEventLength = config["detect"]["movement"]["minLength"],
-        percentile = config["detect"]["movement"]["percentile"]
-    conda: "env/mne.yml"
-    script: "python/movement.py"
-
-#
-# Detect episodes of rest
-#
-rule rest:
-    input:
-        data = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl"
-    output:
-        episodes = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
-    params:
-        maxTimeApart = config["detect"]["rest"]["maxTimeApart"],
-        minEventLength = config["detect"]["rest"]["minLength"],
-        percentile = config["detect"]["rest"]["percentile"]
-    conda: "env/mne.yml"
-    script: "python/rest.py"
-
-#
-# Detect episodes of action potentials
-#
-rule action_potential:
-    input:
-        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
-    output:
-        action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv"
-    params:
-        diffThreshold = config["detect"]["ap"]["diffThreshold"],
-        minReachedVoltage = config["detect"]["ap"]["minReachedVoltage"]
-    conda: "env/mne.yml"
-    script: "python/action_potential.py"
-
-#
-# Basic Vm statistics for plots
+# Basic Vm statistics
 #
 rule vm_statistics:
     input:

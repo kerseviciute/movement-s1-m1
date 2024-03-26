@@ -1,4 +1,6 @@
 rule report_summary:
+    input:
+        samples = config["sample_sheet"]
     output:
         report = "{deploy_directory}/index.html"
     params:

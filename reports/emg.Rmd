@@ -25,6 +25,7 @@ title: `r config$report$title`
 # Detection of movement episodes in `r gsub(region, pattern = "_", replacement = " ")` {.tabset .tabset-pills}
 
 **Table 1.** Number of movement and rest episodes and their overall length in all the samples.
+The _Overlaps_ column specifies whether there are any detected overlapping movement and rest episodes.
 
 ```{r, include = TRUE}
 episodes <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
@@ -33,17 +34,37 @@ episodes <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
   fileMove <- glue("{prefix}/{sample[ , Location ]}/movement_episodes.csv")
   fileRest <- glue("{prefix}/{sample[ , Location ]}/rest_episodes.csv")
 
+  move <- fread(fileMove)
+  rest <- fread(fileRest)
+
+  setkeyv(move, c("Start", "End"))
+  setkeyv(rest, c("Start", "End"))
+
+  nOverlaps <- foreach(channel = move[ , unique(Channel) ], .combine = rbind) %do% {
+    foverlaps(
+      rest[ Channel == channel ], move[ Channel == channel ]
+    )
+  } %>%
+    # Exclude if overlap is only on the start/end time points
+    .[ EventStart != i.EventEnd ] %>%
+    .[ EventEnd != i.EventStart ] %>%
+    na.omit() %>%
+    nrow()
+
   rbind(
     fread(fileMove),
     fread(fileRest)
   ) %>%
-    .[ , SID := sid ]
+    .[ , SID := sid ] %>%
+    .[ , Overlaps := nOverlaps ]
 }
 
 counts <- episodes[ ,
   list(Count = .N, Time = round(sum(Length), 2)),
   by = list(SID, Movement)
 ]
+
+overlaps <- episodes[ , list(Overlaps = unique(Overlaps)), by = SID ]
 
 counts <- merge(
   counts[ Movement == TRUE ] %>%
@@ -53,8 +74,9 @@ counts <- merge(
     .[ , Movement := NULL ] %>%
     setnames(c("Count", "Time"), c("Rest", "TimeRest"))
 ) %>%
+  merge(overlaps) %>%
   setcolorder(c("SID", "TimeMovement", "TimeRest")) %>%
-  .[]
+  .[ ]
 
 counts %>% showTable()
 ```

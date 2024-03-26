@@ -7,9 +7,18 @@ vm = pd.read_pickle(f"{prefix}/vm/filter.pkl")
 ap = pd.read_csv(f"{prefix}/action_potentials.csv")
 ```
 
+The Vm data were not filtered nor centered.
+
+Action potentials (APs) were detected using the first derivative of the membrane potential, $V_m'$. The onset
+of the AP was defined as the time point where $V_m'$ exceeded 22 mV/ms. The offset of the AP was defined as
+the time point 2 ms after the AP peak ($V_m' = 0$ mV/ms).
+
 ```{python, include = TRUE}
 plot_all_events(vm, channels = vm.ch_names, movement = ap, limit = [-100, 10])
 ```
+
+**Figure 1.** Membrane potential in animal `r animalId` cell `r cellName`. Detected action potentials
+are marked in red.
 
 ```{python, include = TRUE}
 vm_data = vm.get_data()
@@ -17,3 +26,5 @@ plt.figure(figsize = (20, 4))
 plt.plot(np.concatenate(vm_data), linewidth = 0.5)
 plt.show()
 ```
+
+**Figure 2.** Continuous membrane potential data through all the trials.
