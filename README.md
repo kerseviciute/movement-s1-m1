@@ -87,15 +87,14 @@ detected episodes for now.
 - [x] Use low-pass filtered data for movement / rest episode detection
   - [x] Do any movement / rest episodes overlap?
 - [x] Fix statistics in the movement vs rest comparison report (need to correct for time)
-- [x] mixed effects models for time?
-- [ ] dying cells
+  - [ ] dying cells
 - [ ] frequency analysis (movement on / movement off)
 - [ ] kursinio planas
 - [ ] add method descriptions to reports
   - [ ] index (how to use the website)
   - [ ] correlation analysis
   - [ ] EMG (filtering + movement detection)
-  - [ ] Vm (filtering + AP detection)
+  - [x] Vm (filtering + AP detection)
 
 **To discuss**
 - Detection of movement / rest episodes was performed using the low-pass filtered EMG data. Included

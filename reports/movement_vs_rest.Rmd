@@ -144,8 +144,7 @@ fitModel <- function(data) {
     estimate = model.full %>%
       summary() %>%
       coef() %>%
-      as.data.table(keep.rownames = "FixedEffect")
-      %>%
+      as.data.table(keep.rownames = "FixedEffect") %>%
       .[ FixedEffect == "EpisodeRest", Estimate ]
   )
 }
@@ -174,12 +173,10 @@ evaluateSignificance <- function(data, variable, compare = c("Layer", "Cortex", 
   )
 
   foreach(region = data[ , unique(Region) ], .combine = rbind) %do% {
-    dt <- data %>%
-      .[ Region == region ]
+    dt <- data[ Region == region ]
     fit <- fitModel(dt)
 
-    dt <- dt %>%
-      .[ , list(variable = mean(variable), Region), by = list(SID, Episode) ]
+    dt <- dt[ , list(variable = mean(variable), Region), by = list(SID, Episode) ]
 
     data.table(
       Region = region,
