@@ -32,10 +32,12 @@ rule sample_sheet:
 #
 rule correlation:
     input:
-        emg = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl",
-        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
+        emg = "output/{project}/{animal_id}/{cell_name}/emg/filter.csv",
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
     output:
         correlation = "output/{project}/{animal_id}/{cell_name}/lagged_correlation.csv"
+    params:
+        sfreq = config["sampling_rate"]
     conda: "env/mne.yml"
     script: "python/correlation_lag.py"
 
@@ -44,7 +46,7 @@ rule correlation:
 #
 rule vm_statistics:
     input:
-        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl",
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.csv",
         action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv",
         movement = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv",
         rest = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
