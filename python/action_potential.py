@@ -10,8 +10,9 @@ with open(f"{snakemake.scriptdir}/action_potential_methods.py", "r") as file:
 
 print(f"Detecting action potentials in cell {snakemake.wildcards['animal_id']} {snakemake.wildcards['cell_name']}")
 
+sfreq = snakemake.params["sfreq"]
 data = pd.read_csv(snakemake.input["vm"], index_col = 0)
-time = data.columns
+time = np.array(data.columns.values, dtype = float) / sfreq
 trials = data.index.values
 
 diffThreshold = snakemake.params["diffThreshold"]

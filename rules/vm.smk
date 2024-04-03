@@ -36,6 +36,7 @@ rule action_potential:
         action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv"
     params:
         diffThreshold = config["detect"]["ap"]["diffThreshold"],
-        minReachedVoltage = config["detect"]["ap"]["minReachedVoltage"]
+        minReachedVoltage = config["detect"]["ap"]["minReachedVoltage"],
+        sfreq = config["sampling_rate"]
     conda: "../env/mne.yml"
     script: "../python/action_potential.py"
