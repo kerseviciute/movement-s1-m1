@@ -26,7 +26,7 @@ rule report_correlation:
 rule report_vm:
     input:
         samples = config["sample_sheet"],
-        vm_filter = expand("output/{project}/{sid}/vm/filter.pkl",
+        vm_filter = expand("output/{project}/{sid}/vm/filter.csv",
             project = config["project"],
             sid = samples["Location"]),
         action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
@@ -43,10 +43,7 @@ rule report_vm:
 rule report_emg:
     input:
         samples = config["sample_sheet"],
-        emg_raw = expand("output/{project}/{sid}/emg/raw.pkl",
-            project = config["project"],
-            sid = samples["Location"]),
-        emg_filter = expand("output/{project}/{sid}/emg/filter.pkl",
+        emg_filter = expand("output/{project}/{sid}/emg/filter.csv",
             project = config["project"],
             sid = samples["Location"]),
         movement = expand("output/{project}/{sid}/movement_episodes.csv",

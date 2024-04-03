@@ -5,6 +5,7 @@ library(foreach)
 library(data.table)
 library(dplyr)
 library(glue)
+library(ggplot2)
 
 config <- snakemake@config
 
@@ -28,11 +29,20 @@ title: `r config$report$title`
 The _Overlaps_ column specifies whether there are any detected overlapping movement and rest episodes.
 
 ```{r, include = TRUE}
+getSampleFile <- function(filelist, animalId, cellName) {
+  files <- grep(pattern = glue("{animalId}/"), x = filelist, value = TRUE)
+  files <- grep(pattern = glue("{cellName}/"), x = files, value = TRUE)
+
+  stopifnot(length(files) == 1)
+
+  files
+}
+
 episodes <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
   sample <- samples[ SID == sid ]
 
-  fileMove <- glue("{prefix}/{sample[ , Location ]}/movement_episodes.csv")
-  fileRest <- glue("{prefix}/{sample[ , Location ]}/rest_episodes.csv")
+  fileMove <- getSampleFile(snakemake@input$movement, animalId = sample[ , AnimalID ], cellName = sample[ , CellName ])
+  fileRest <- getSampleFile(snakemake@input$rest, animalId = sample[ , AnimalID ], cellName = sample[ , CellName ])
 
   move <- fread(fileMove)
   rest <- fread(fileRest)
@@ -79,16 +89,6 @@ counts <- merge(
   .[ ]
 
 counts %>% showTable()
-```
-
-```{python python_setup}
-import mne
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-with open(f"{r.scriptdir}/python/plot_all_events.py", "r") as file:
-    exec(file.read())
 ```
 
 ```{r results}
