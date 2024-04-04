@@ -10,7 +10,6 @@ library(ggplot2)
 config <- snakemake@config
 
 scriptdir <- snakemake@scriptdir
-prefix <- snakemake@params$prefix
 region <- snakemake@wildcards$region
 
 samples <- fread(snakemake@input$samples)

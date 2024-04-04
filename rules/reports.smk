@@ -18,8 +18,7 @@ rule report_correlation:
     output:
         report = "{deploy_directory}/correlation.html"
     params:
-        script = "reports/correlation.Rmd",
-        prefix = expand("output/{project}", project = config["project"])
+        script = "reports/correlation.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"
 
@@ -35,8 +34,7 @@ rule report_vm:
     output:
         report = "{deploy_directory}/vm_{region}.html"
     params:
-        script = "reports/vm.Rmd",
-        prefix = expand("output/{project}", project = config["project"])
+        script = "reports/vm.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"
 
@@ -55,8 +53,7 @@ rule report_emg:
     output:
         report = "{deploy_directory}/emg_{region}.html"
     params:
-        script = "reports/emg.Rmd",
-        prefix = expand("output/{project}", project = config["project"])
+        script = "reports/emg.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"
 
@@ -78,7 +75,6 @@ rule report_movement_vs_rest:
     output:
         report = "{deploy_directory}/movement_vs_rest.html"
     params:
-        script = "reports/movement_vs_rest.Rmd",
-        prefix = expand("output/{project}", project = config["project"])
+        script = "reports/movement_vs_rest.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"
