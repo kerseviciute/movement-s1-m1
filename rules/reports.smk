@@ -94,7 +94,7 @@ rule report_final_emg_episodes:
         rest_filter = expand("output/{project}/{sid}/rest_filtered.csv",
             project = config["project"],
             sid = samples["Location"]),
-        emg_filter = expand("output/{project}/{sid}/emg/filter.csv",
+        onset_emg = expand("output/{project}/{sid}/emg/movement_onset.csv",
             project = config["project"],
             sid = samples["Location"])
     output:

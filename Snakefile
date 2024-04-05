@@ -54,3 +54,14 @@ rule vm_statistics:
         statistics = "output/{project}/{animal_id}/{cell_name}/vm_statistics.csv"
     conda: "env/mne.yml"
     script: "python/vm_statistics.py"
+
+rule movement_onset_emg:
+    input:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered.csv",
+        raw = "output/{project}/{animal_id}/{cell_name}/{type}/raw.csv"
+    output:
+        onset_emg = "output/{project}/{animal_id}/{cell_name}/{type}/movement_onset.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "env/mne.yml"
+    script: "python/movement_onset.py"

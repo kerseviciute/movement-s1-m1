@@ -10,8 +10,6 @@ library(ggplot2)
 config <- snakemake@config
 
 samples <- fread(snakemake@input$samples)
-
-
 ```
 
 ---
@@ -42,7 +40,7 @@ filter <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
   rest <- fread(getSampleFile(snakemake@input$rest_filter, sample[ , AnimalID ], sample[ , CellName ]))
 
   rbind(movement, rest) %>%
-          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
+    .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 ```
 
@@ -79,3 +77,34 @@ rbind(
 ```
 
 **Figure 2.** Number of detected rest episodes before and after filtering.
+
+```{r, include = TRUE}
+emg <- foreach(file = snakemake@input$onset_emg, .combine = rbind) %do% {
+  data <- fread(file)
+  x <- as.matrix(data[ 2:nrow(data), 2:ncol(data) ])
+  rownames(x) <- data[ 2:nrow(data), V1 ]
+  x
+}
+
+time <- data.table(Index = colnames(x)) %>%
+  .[ , Time := seq(0, 1 - 1 / 20000, 1 / 20000) - 0.5 ] %>%
+  .[ ]
+
+emg <- emg %>%
+  reshape2::melt() %>%
+  setDT() %>%
+  setnames(c("EventID", "Index", "EMG")) %>%
+  merge(time) %>%
+  .[ , list(EMG = mean(abs(EMG))), by = Time ] %>%
+  .[ order(Time) ]
+
+emg %>%
+  ggplot() +
+  geom_line(aes(x = Time, y = EMG), linewidth = 0.25) +
+  geom_vline(aes(xintercept = 0), color = "orange") +
+  theme_light(base_size = 8) +
+  xlab("Time") +
+  ylab("Average rectified EMG")
+```
+
+**Figure 3.** Average high-pass filtered (at 2Hz) rectified EMG data during the onset of movement episodes in all cells.
