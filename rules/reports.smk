@@ -96,6 +96,12 @@ rule report_final_emg_episodes:
             sid = samples["Location"]),
         onset_emg = expand("output/{project}/{sid}/emg/movement_onset.csv",
             project = config["project"],
+            sid = samples["Location"]),
+        onset_vm = expand("output/{project}/{sid}/vm/movement_onset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
+            project = config["project"],
             sid = samples["Location"])
     output:
         report = "{deploy_directory}/final_emg_episodes.html"

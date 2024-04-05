@@ -58,7 +58,9 @@ rule vm_statistics:
 rule movement_onset_emg:
     input:
         movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered.csv",
-        raw = "output/{project}/{animal_id}/{cell_name}/{type}/raw.csv"
+        raw = lambda wildcards:
+            "output/{project}/{animal_id}/{cell_name}/emg/raw.csv" if wildcards.type in ["emg"]
+            else "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
     output:
         onset_emg = "output/{project}/{animal_id}/{cell_name}/{type}/movement_onset.csv"
     params:
