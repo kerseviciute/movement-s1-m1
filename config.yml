@@ -38,8 +38,13 @@ report:
     - vm_S1_L5
     - vm_M1_L23
     - vm_M1_L5
-    - emg_S1_L23
-    - emg_S1_L5
-    - emg_M1_L23
-    - emg_M1_L5
-    - movement_vs_rest
+    - episodes_emg_S1_L23
+    - episodes_emg_S1_L5
+    - episodes_emg_M1_L23
+    - episodes_emg_M1_L5
+    - filtered_emg_S1_L23
+    - filtered_emg_S1_L5
+    - filtered_emg_M1_L23
+    - filtered_emg_M1_L5
+    - episodes_movement_vs_rest
+    - filtered_movement_vs_rest

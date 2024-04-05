@@ -1,6 +1,7 @@
 ```{r r_setup, include = FALSE}
 # snakemake <- readRDS(".emg.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
 library(foreach)
 library(data.table)
 library(dplyr)
@@ -28,15 +29,6 @@ title: `r config$report$title`
 The _Overlaps_ column specifies whether there are any detected overlapping movement and rest episodes.
 
 ```{r, include = TRUE}
-getSampleFile <- function(filelist, animalId, cellName) {
-  files <- grep(pattern = glue("{animalId}/"), x = filelist, value = TRUE)
-  files <- grep(pattern = glue("{cellName}/"), x = files, value = TRUE)
-
-  stopifnot(length(files) == 1)
-
-  files
-}
-
 episodes <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
   sample <- samples[ SID == sid ]
 

@@ -1,0 +1,81 @@
+```{r r_setup, include = FALSE}
+# snakemake <- readRDS(".final_emg_episodes.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
+library(data.table)
+library(dplyr)
+library(foreach)
+library(ggplot2)
+
+config <- snakemake@config
+
+samples <- fread(snakemake@input$samples)
+
+
+```
+
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>`r config$report$author`</small>
+title: `r config$report$title`
+---
+
+# Filtering detected episodes
+
+The detected movement and rest episodes were filtered and only the episodes longer than 500 ms were kept for further analysis. The movement episodes were also required to follow a rest period of at least 500 ms.
+
+```{r}
+all <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+
+  movement <- fread(getSampleFile(snakemake@input$movement, sample[ , AnimalID ], sample[ , CellName ]))
+  rest <- fread(getSampleFile(snakemake@input$rest, sample[ , AnimalID ], sample[ , CellName ]))
+
+  rbind(movement, rest) %>%
+    .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
+}
+
+filter <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+
+  movement <- fread(getSampleFile(snakemake@input$movement_filter, sample[ , AnimalID ], sample[ , CellName ]))
+  rest <- fread(getSampleFile(snakemake@input$rest_filter, sample[ , AnimalID ], sample[ , CellName ]))
+
+  rbind(movement, rest) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
+}
+```
+
+```{r, include = TRUE}
+rbind(
+  all[ Movement == TRUE, list(Count = .N, Type = "Before"), by = SID ],
+  filter[ Movement == TRUE, list(Count = .N, Type = "After"), by = SID ]
+) %>%
+  .[ , Type := factor(Type, levels = c("Before", "After")) ] %>%
+  ggplot() +
+  geom_bar(aes(x = SID, y = Count, fill = Type), stat = "identity", position = "dodge") +
+  theme_light(base_size = 8) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  xlab("") +
+  theme(legend.position = "top") +
+  theme(legend.title = element_blank())
+```
+
+**Figure 1.** Number of detected movement episodes before and after filtering.
+
+```{r, include = TRUE}
+rbind(
+  all[ Movement == FALSE, list(Count = .N, Type = "Before"), by = SID ],
+  filter[ Movement == FALSE, list(Count = .N, Type = "After"), by = SID ]
+) %>%
+  .[ , Type := factor(Type, levels = c("Before", "After")) ] %>%
+  ggplot() +
+  geom_bar(aes(x = SID, y = Count, fill = Type), stat = "identity", position = "dodge") +
+  theme_light(base_size = 8) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  xlab("") +
+  theme(legend.position = "top") +
+  theme(legend.title = element_blank())
+```
+
+**Figure 2.** Number of detected rest episodes before and after filtering.

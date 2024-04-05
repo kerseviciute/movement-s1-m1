@@ -44,14 +44,14 @@ rule report_emg:
         emg_filter = expand("output/{project}/{sid}/emg/filter.csv",
             project = config["project"],
             sid = samples["Location"]),
-        movement = expand("output/{project}/{sid}/movement_episodes.csv",
+        movement = expand("output/{project}/{sid}/movement_{{type}}.csv",
             project = config["project"],
             sid = samples["Location"]),
-        rest = expand("output/{project}/{sid}/rest_episodes.csv",
+        rest = expand("output/{project}/{sid}/rest_{{type}}.csv",
             project = config["project"],
             sid = samples["Location"])
     output:
-        report = "{deploy_directory}/emg_{region}.html"
+        report = "{deploy_directory}/{type}_emg_{region}.html"
     params:
         script = "reports/emg.Rmd"
     conda: "../env/r.yml"
@@ -60,10 +60,10 @@ rule report_emg:
 rule report_movement_vs_rest:
     input:
         samples = config["sample_sheet"],
-        movement = expand("output/{project}/{sid}/movement_episodes.csv",
+        movement = expand("output/{project}/{sid}/movement_{{type}}.csv",
             project = config["project"],
             sid = samples["Location"]),
-        rest = expand("output/{project}/{sid}/rest_episodes.csv",
+        rest = expand("output/{project}/{sid}/rest_{{type}}.csv",
             project = config["project"],
             sid = samples["Location"]),
         action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
@@ -73,8 +73,33 @@ rule report_movement_vs_rest:
             project = config["project"],
             sid = samples["Location"])
     output:
-        report = "{deploy_directory}/movement_vs_rest.html"
+        report = "{deploy_directory}/{type}_movement_vs_rest.html"
     params:
         script = "reports/movement_vs_rest.Rmd"
+    conda: "../env/r.yml"
+    script: "../R/render.R"
+
+rule report_final_emg_episodes:
+    input:
+        samples = config["sample_sheet"],
+        movement = expand("output/{project}/{sid}/movement_episodes.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        rest = expand("output/{project}/{sid}/rest_episodes.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        movement_filter = expand("output/{project}/{sid}/movement_filtered.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        rest_filter = expand("output/{project}/{sid}/rest_filtered.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        emg_filter = expand("output/{project}/{sid}/emg/filter.csv",
+            project = config["project"],
+            sid = samples["Location"])
+    output:
+        report = "{deploy_directory}/final_emg_episodes.html"
+    params:
+        script = "reports/final_emg_episodes.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"

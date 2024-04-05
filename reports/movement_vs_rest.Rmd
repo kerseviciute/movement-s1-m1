@@ -1,6 +1,7 @@
 ```{r, include = FALSE}
 # snakemake <- readRDS(".movement_vs_rest.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
 library(data.table)
 library(dplyr)
 library(foreach)
@@ -18,28 +19,28 @@ samples <- fread(snakemake@input$samples) %>%
   .[ , Region := gsub(Region, pattern = "23", replacement = "2/3") ] %>%
   .[ , Layer := gsub(Layer, pattern = "23", replacement = "2/3") ]
 
-movement <- foreach(file = snakemake@input$movement, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/movement_episodes.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+movement <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$movement, sample[ , AnimalID ], sample[ , CellName ])) %>%
+    .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 
-rest <- foreach(file = snakemake@input$rest, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/rest_episodes.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+rest <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$rest, sample[ , AnimalID ], sample[ , CellName ])) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 
-ap <- foreach(file = snakemake@input$action_potentials, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/action_potentials.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+ap <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$action_potentials, sample[ , AnimalID ], sample[ , CellName ])) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 
-stats <- foreach(file = snakemake@input$statistics, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/vm_statistics.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+stats <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$statistics, sample[ , AnimalID ], sample[ , CellName ])) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 } %>%
   merge(samples, by = "SID") %>%
   merge(rbind(movement, rest), by = c("ID", "SID")) %>%

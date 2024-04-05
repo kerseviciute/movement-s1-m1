@@ -57,3 +57,13 @@ rule rest:
         sfreq = config["sampling_rate"]
     conda: "../env/mne.yml"
     script: "../python/rest.py"
+
+rule filter_episodes:
+    input:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv",
+        rest = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
+    output:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered.csv",
+        rest = "output/{project}/{animal_id}/{cell_name}/rest_filtered.csv"
+    conda: "../env/r.yml"
+    script: "../R/filter_episodes.R"

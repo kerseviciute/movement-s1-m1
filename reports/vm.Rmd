@@ -1,6 +1,7 @@
 ```{r, include = FALSE}
 # snakemake <- readRDS(".vm.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
 library(foreach)
 library(data.table)
 library(dplyr)
@@ -17,15 +18,6 @@ samples <- samples[ Region %in% region ]
 
 formatCortex <- ifelse(grepl(region, pattern = "S1"), "S1", "M1")
 formatLayer <- ifelse(grepl(region, pattern = "L23"), "L2/3", "L5")
-
-getSampleFile <- function(filelist, animalId, cellName) {
-  files <- grep(pattern = glue("{animalId}/"), x = filelist, value = TRUE)
-  files <- grep(pattern = glue("{cellName}/"), x = files, value = TRUE)
-
-  stopifnot(length(files) == 1)
-
-  files
-}
 ```
 
 ---
