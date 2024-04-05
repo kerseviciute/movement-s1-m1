@@ -48,7 +48,7 @@ navbar:
     - text: Movement analysis
       menu:
         - text: Filtering
-          href: filtered_movement_vs_rest.html
+          href: final_emg_episodes.html
 output:
   html_document:
     self_contained: true
