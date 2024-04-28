@@ -67,3 +67,14 @@ rule movement_onset_emg:
         sfreq = config["sampling_rate"]
     conda: "env/mne.yml"
     script: "python/movement_onset.py"
+
+rule fft:
+    input:
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.csv",
+        episodes = "output/{project}/{animal_id}/{cell_name}/{type}_episodes.csv"
+    output:
+        fft = "output/{project}/{animal_id}/{cell_name}/{type}_fft.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "env/mne.yml"
+    script: "python/fft.py"
