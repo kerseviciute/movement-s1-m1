@@ -109,3 +109,19 @@ rule report_final_emg_episodes:
         script = "reports/final_emg_episodes.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"
+
+rule report_fft:
+    input:
+        samples = config["sample_sheet"],
+        movement = expand("output/{project}/{sid}/movement_fft.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        rest = expand("output/{project}/{sid}/rest_fft.csv",
+            project = config["project"],
+            sid = samples["Location"])
+    output:
+        report = "{deploy_directory}/fft.html"
+    params:
+        script = "reports/fft.Rmd"
+    conda: "../env/r.yml"
+    script: "../R/render.R"

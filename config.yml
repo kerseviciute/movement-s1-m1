@@ -49,3 +49,4 @@ report:
     - episodes_movement_vs_rest
     - filtered_movement_vs_rest
     - final_emg_episodes
+    - fft

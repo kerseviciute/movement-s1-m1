@@ -49,6 +49,8 @@ navbar:
       menu:
         - text: Filtering
           href: final_emg_episodes.html
+        - text: FFT
+          href: fft.hmtl
 output:
   html_document:
     self_contained: true
