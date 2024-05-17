@@ -1,5 +1,5 @@
 ```{r r_setup, include = FALSE}
-# snakemake <- readRDS(".final_emg_episodes.Rmd.RDS")
+# snakemake <- readRDS(".vm_dynamics.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
 snakemake@source("R/getSampleFile.R")
 library(data.table)
@@ -9,6 +9,7 @@ library(ggplot2)
 library(wesanderson)
 library(ggpubr)
 library(cowplot)
+library(RColorBrewer)
 
 config <- snakemake@config
 
@@ -92,7 +93,7 @@ emg <- foreach(file = snakemake@input$onset_emg, .combine = rbind) %do% {
   x
 }
 
-time <- data.table(Index = colnames(x)) %>%
+time <- data.table(Index = colnames(emg)) %>%
   .[ , Time := seq(0, 1 - 1 / 20000, 1 / 20000) - 0.5 ] %>%
   .[ ]
 
@@ -273,6 +274,143 @@ using the Wilcoxon signed-rank test for paired data. The points represent differ
 data of the same cell is connected by a line. **(c)** Peri-stimulus time histograms (PSTHs) of action
 potential spikes in all regions of interest.
 
+```{r, include = TRUE, fig.height = 5.8}
+###############
+# P1 (a)
+###############
+
+p1 <- average_data %>%
+  ggplot() +
+  annotate("rect", xmin = -0.4, xmax = -0.2, ymin = -Inf, ymax = Inf, fill = colors[ 1 ], linewidth = 0.5, alpha = 0.5) +
+  annotate("rect", xmin = -0.1, xmax = 0, ymin = -Inf, ymax = Inf, fill = colors[ 2 ], linewidth = 0.5, alpha = 0.5) +
+  annotate("rect", xmin = 0, xmax = 0.1, ymin = -Inf, ymax = Inf, fill = colors[ 3 ], linewidth = 0.5, alpha = 0.5) +
+  annotate("rect", xmin = 0.2, xmax = 0.4, ymin = -Inf, ymax = Inf, fill = colors[ 4 ], linewidth = 0.5, alpha = 0.5) +
+  geom_line(aes(x = Time, y = Vm, color = Region), linewidth = 0.5) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  scale_color_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  xlab("Time, t (s)") +
+  ylab("Membrane potential, V (mV)") +
+  annotate("text", x = -0.3, y = -47, label = "B", size = 2.5) +
+  annotate("text", x = -0.05, y = -47, label = "P", size = 2.5) +
+  annotate("text", x = 0.05, y = -47, label = "O", size = 2.5) +
+  annotate("text", x = 0.3, y = -47, label = "L", size = 2.5)
+
+###############
+# P2 (b)
+###############
+
+type_average <- eventData %>%
+  .[ , list(VM = mean(Vm)), by = list(SID, Type, Region) ] %>%
+  .[ Type != "None" ] %>%
+  .[ Type == "B", Type := "Baseline" ] %>%
+  .[ Type == "P", Type := "Pre-movement" ] %>%
+  .[ Type == "O", Type := "Movement onset" ] %>%
+  .[ Type == "L", Type := "Late movement" ] %>%
+  .[ , Type := factor(Type, levels = c("Baseline", "Pre-movement", "Movement onset", "Late movement")) ] %>%
+  .[ , Region := gsub(x = Region, pattern = "_", replacement = " ") ] %>%
+  .[ , Region := gsub(x = Region, pattern = "23", replacement = "2/3") ] %>%
+  .[ , Region := factor(Region, levels = c("S1 L2/3", "S1 L5", "M1 L2/3", "M1 L5")) ] %>%
+  .[ , Animal := gsub(x = SID, pattern = "(W[0-9]).*", replacement = "\\1") ] %>%
+  .[ , Animal := factor(Animal, levels = c("W1", "W2", "W3", "W4")) ]
+
+
+change <- foreach(sid = type_average[ , unique(SID) ], .combine = rbind) %do% {
+  baseline <- type_average[ SID == sid & Type == "Baseline", VM ]
+  premovement <- type_average[ SID == sid & Type == "Pre-movement", VM ]
+  onset <- type_average[ SID == sid & Type == "Movement onset", VM ]
+  late <- type_average[ SID == sid & Type == "Late movement", VM ]
+
+  data.table(
+    SID = sid,
+    Type = c("Pre-movement", "Movement onset", "Late movement"),
+    Change = c(premovement - baseline, onset - baseline, late - baseline),
+    Region = type_average[ SID == sid, unique(Region) ]
+  )
+} %>%
+  .[ , Type := factor(Type, levels = c("Baseline", "Pre-movement", "Movement onset", "Late movement")) ]
+
+p2 <- change %>%
+  ggplot(aes(x = Region, y = Change, color = Region)) +
+  facet_wrap(~Type, ncol = 4) +
+  geom_boxplot(alpha = 0.25, outlier.alpha = 0) +
+  geom_jitter(height = 0, width = 0.2, alpha = 0.5) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(
+      c("S1 L2/3", "S1 L5"),
+      c("S1 L5", "M1 L2/3"),
+      c("S1 L2/3", "M1 L2/3"),
+      c("S1 L5", "M1 L5"),
+      c("S1 L2/3", "M1 L5")
+    ),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(c("M1 L2/3", "M1 L5")),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_color_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  scale_fill_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  xlab("") +
+  theme(legend.position = "none") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  ylab("Membrane potential change, V (mV)") +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+###############
+# P3 (c)
+###############
+
+p3 <- type_average %>%
+  ggplot(aes(x = Region, y = VM, color = Region)) +
+  facet_wrap(~Type, ncol = 4) +
+  geom_boxplot(alpha = 0.25, outlier.alpha = 0) +
+  geom_jitter(height = 0, width = 0.2, alpha = 0.5) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(
+      c("S1 L2/3", "S1 L5"),
+      c("S1 L5", "M1 L2/3"),
+      c("S1 L2/3", "M1 L2/3"),
+      c("S1 L5", "M1 L5"),
+      c("S1 L2/3", "M1 L5")
+    ),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(c("M1 L2/3", "M1 L5")),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_color_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  scale_fill_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  xlab("") +
+  theme(legend.position = "none") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  ylab("Membrane potential, V (mV)") +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+ggarrange(
+  ggarrange(p1, p2, labels = letters[ 1:2 ], font.label = list(size = 9), common.legend = TRUE, widths = c(0.4, 0.6)),
+  ggarrange(p3, labels = letters[ 3 ], font.label = list(size = 9)),
+  nrow = 2
+)
+```
+
+**Figure 5.** Membrane potential dynamics in different brain areas during movement onset.
+**(a)** Grand average membrane potential during movement onset in all regions of interest. Four epochs of interest are highlighted (Baseline, B; Pre-movement, P; Movement onset, O; and Late Movement, L). The zero time point marks the movement onset.
+**(b)** Membrane potential change from the baseline during other movement onset stages.
+**(c)** Average membrane potential during various stages of movement onset, highlighting the differences between different brain regions. All p-values were calculated using the Wilcoxon signed-rank test. The points represent different cells.
 
 ## Movement offset
 
@@ -343,7 +481,7 @@ emg <- foreach(file = snakemake@input$offset_emg, .combine = rbind) %do% {
   x
 }
 
-time <- data.table(Index = colnames(x)) %>%
+time <- data.table(Index = colnames(emg)) %>%
   .[ , Time := seq(0, 1 - 1 / 20000, 1 / 20000) - 0.5 ] %>%
   .[ ]
 
@@ -364,7 +502,7 @@ emg %>%
   ylab("Average rectified EMG")
 ```
 
-**Figure 3.** Average high-pass filtered (at 2Hz) rectified EMG data during the onset of movement episodes in all cells.
+**Figure 3.** Average high-pass filtered (at 2Hz) rectified EMG data during the offset of movement episodes in all cells.
 
 ```{r, include = TRUE, fig.height = 5.8}
 colors <- wes_palette("Zissou1")
@@ -516,10 +654,144 @@ ggarrange(plotlist = plot, ncol = 4)
 ```
 
 **Figure 4.** Membrane potential and action potential dynamics during spontaneous movement
-initiation. Four epochs of interest are highlighted (Late Movement, L; Movement offset, O;
-Post-movement, P; and Baseline, B). The zero time point marks the movement onset. **(a)** Grand
-average membrane potential during movement onset in all regions of interest. **(b)** Average
+offset. Four epochs of interest are highlighted (Late Movement, L; Movement offset, O;
+Post-movement, P; and Baseline, B). The zero time point marks the movement offset. **(a)** Grand
+average membrane potential during movement offset in all regions of interest. **(b)** Average
 membrane potential during each epoch in all regions of interest. The p-values were calculated
 using the Wilcoxon signed-rank test for paired data. The points represent different cells, and
 data of the same cell is connected by a line. **(c)** Peri-stimulus time histograms (PSTHs) of action
 potential spikes in all regions of interest.
+
+```{r, include = TRUE, fig.height = 5.8}
+###############
+# P1 (a)
+###############
+
+p1 <- average_data %>%
+  ggplot() +
+  annotate("rect", xmin = -0.4, xmax = -0.2, ymin = -Inf, ymax = Inf, fill = colors[ 1 ], linewidth = 0.5, alpha = 0.5) +
+  annotate("rect", xmin = -0.1, xmax = 0, ymin = -Inf, ymax = Inf, fill = colors[ 2 ], linewidth = 0.5, alpha = 0.5) +
+  annotate("rect", xmin = 0, xmax = 0.1, ymin = -Inf, ymax = Inf, fill = colors[ 3 ], linewidth = 0.5, alpha = 0.5) +
+  annotate("rect", xmin = 0.2, xmax = 0.4, ymin = -Inf, ymax = Inf, fill = colors[ 4 ], linewidth = 0.5, alpha = 0.5) +
+  geom_line(aes(x = Time, y = Vm, color = Region), linewidth = 0.5) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "top") +
+  scale_color_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  xlab("Time, t (s)") +
+  ylab("Membrane potential, V (mV)") +
+  annotate("text", x = -0.3, y = -47, label = "L", size = 2.5) +
+  annotate("text", x = -0.05, y = -47, label = "O", size = 2.5) +
+  annotate("text", x = 0.05, y = -47, label = "P", size = 2.5) +
+  annotate("text", x = 0.3, y = -47, label = "B", size = 2.5)
+
+###############
+# P2 (b)
+###############
+
+type_average <- eventData %>%
+  .[ , list(Vm = mean(Vm)), by = list(SID, Type, Region) ] %>%
+  .[ Type != "None" ] %>%
+  .[ , Type := factor(Type, levels = c("Late movement", "Movement offset", "Post-movement", "Baseline")) ] %>%
+  .[ , Region := gsub(x = Region, pattern = "_", replacement = " ") ] %>%
+  .[ , Region := gsub(x = Region, pattern = "23", replacement = "2/3") ] %>%
+  .[ , Region := factor(Region, levels = c("S1 L2/3", "S1 L5", "M1 L2/3", "M1 L5")) ] %>%
+  .[ , Animal := gsub(x = SID, pattern = "(W[0-9]).*", replacement = "\\1") ] %>%
+  .[ , Animal := factor(Animal, levels = c("W1", "W2", "W3", "W4")) ]
+
+
+change <- foreach(sid = type_average[ , unique(SID) ], .combine = rbind) %do% {
+  late <- type_average[ SID == sid & Type == "Late movement", Vm ]
+  offset <- type_average[ SID == sid & Type == "Movement offset", Vm ]
+  postmovement <- type_average[ SID == sid & Type == "Post-movement", Vm ]
+  baseline <- type_average[ SID == sid & Type == "Baseline", Vm ]
+
+  data.table(
+    SID = sid,
+    Type = c("Late movement", "Movement offset", "Post-movement"),
+    Change = c(late - baseline, offset - baseline, postmovement - baseline),
+    Region = type_average[ SID == sid, unique(Region) ]
+  )
+} %>%
+  .[ , Type := factor(Type, levels = c("Late movement", "Movement offset", "Post-movement")) ]
+
+p2 <- change %>%
+  ggplot(aes(x = Region, y = Change, color = Region)) +
+  facet_wrap(~Type, ncol = 4) +
+  geom_boxplot(alpha = 0.25, outlier.alpha = 0) +
+  geom_jitter(height = 0, width = 0.2, alpha = 0.5) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(
+      c("S1 L2/3", "S1 L5"),
+      c("S1 L5", "M1 L2/3"),
+      c("S1 L2/3", "M1 L2/3"),
+      c("S1 L5", "M1 L5"),
+      c("S1 L2/3", "M1 L5")
+    ),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(c("M1 L2/3", "M1 L5")),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_color_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  scale_fill_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  xlab("") +
+  theme(legend.position = "none") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  ylab("Membrane potential change, V (mV)") +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+###############
+# P3 (c)
+###############
+
+p3 <- type_average %>%
+  ggplot(aes(x = Region, y = Vm, color = Region)) +
+  facet_wrap(~Type, ncol = 4) +
+  geom_boxplot(alpha = 0.25, outlier.alpha = 0) +
+  geom_jitter(height = 0, width = 0.2, alpha = 0.5) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(
+      c("S1 L2/3", "S1 L5"),
+      c("S1 L5", "M1 L2/3"),
+      c("S1 L2/3", "M1 L2/3"),
+      c("S1 L5", "M1 L5"),
+      c("S1 L2/3", "M1 L5")
+    ),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  stat_compare_means(
+    hide.ns = TRUE,
+    comparisons = list(c("M1 L2/3", "M1 L5")),
+    method = "wilcox",
+    size = 2.5
+  ) +
+  theme_light(base_size = 8) +
+  scale_color_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  scale_fill_manual(name = "", values = brewer.pal(11, "RdBu")[ c(1, 2, 10, 11) ]) +
+  xlab("") +
+  theme(legend.position = "none") +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  ylab("Membrane potential, V (mV)") +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+
+ggarrange(
+  ggarrange(p1, p2, labels = letters[ 1:2 ], font.label = list(size = 9), common.legend = TRUE, widths = c(0.4, 0.6)),
+  ggarrange(p3, labels = letters[ 3 ], font.label = list(size = 9)),
+  nrow = 2
+)
+```
+
+**Figure 5.** Membrane potential dynamics in different brain areas during movement offset.
+**(a)** Grand average membrane potential during movement offset in all regions of interest. Four epochs of interest are highlighted (Late Movement, L; Movement offset, O; Post-movement, P; and Baseline, B). The zero time point marks the movement offset.
+**(b)** Membrane potential change from the baseline during other movement offset stages.
+**(c)** Average membrane potential during various stages of movement offset, highlighting the differences between different brain regions. All p-values were calculated using the Wilcoxon signed-rank test. The points represent different cells.

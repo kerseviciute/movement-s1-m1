@@ -45,12 +45,12 @@ navbar:
           href: episodes_movement_vs_rest.html
         - text: Filtered episodes
           href: filtered_movement_vs_rest.html
+        - text: FFT
+          href: fft.hmtl
     - text: Movement analysis
       menu:
         - text: Vm dynamics
           href: analysis_vm_dynamics.html
-        - text: FFT
-          href: fft.hmtl
 output:
   html_document:
     self_contained: true
