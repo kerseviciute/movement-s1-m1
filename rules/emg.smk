@@ -58,12 +58,22 @@ rule rest:
     conda: "../env/mne.yml"
     script: "../python/rest.py"
 
-rule filter_episodes:
+rule filter_episodes_onset:
     input:
         movement = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv",
         rest = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
     output:
-        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered.csv",
-        rest = "output/{project}/{animal_id}/{cell_name}/rest_filtered.csv"
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered_onset.csv",
+        rest = "output/{project}/{animal_id}/{cell_name}/rest_filtered_onset.csv"
     conda: "../env/r.yml"
-    script: "../R/filter_episodes.R"
+    script: "../R/filter_episodes_onset.R"
+
+rule filter_episodes_offset:
+    input:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv",
+        rest = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
+    output:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered_offset.csv",
+        rest = "output/{project}/{animal_id}/{cell_name}/rest_filtered_offset.csv"
+    conda: "../env/r.yml"
+    script: "../R/filter_episodes_offset.R"

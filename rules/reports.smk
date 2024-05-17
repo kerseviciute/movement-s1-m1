@@ -82,16 +82,20 @@ rule report_movement_vs_rest:
 rule report_final_emg_episodes:
     input:
         samples = config["sample_sheet"],
+
+        # Data before filtering
         movement = expand("output/{project}/{sid}/movement_episodes.csv",
             project = config["project"],
             sid = samples["Location"]),
         rest = expand("output/{project}/{sid}/rest_episodes.csv",
             project = config["project"],
             sid = samples["Location"]),
-        movement_filter = expand("output/{project}/{sid}/movement_filtered.csv",
+
+        # Movement onset
+        movement_filter_onset = expand("output/{project}/{sid}/movement_filtered_onset.csv",
             project = config["project"],
             sid = samples["Location"]),
-        rest_filter = expand("output/{project}/{sid}/rest_filtered.csv",
+        rest_filter_onset = expand("output/{project}/{sid}/rest_filtered_onset.csv",
             project = config["project"],
             sid = samples["Location"]),
         onset_emg = expand("output/{project}/{sid}/emg/movement_onset.csv",
@@ -100,13 +104,29 @@ rule report_final_emg_episodes:
         onset_vm = expand("output/{project}/{sid}/vm/movement_onset.csv",
             project = config["project"],
             sid = samples["Location"]),
+
+        # Movement offset
+        movement_filter_offset = expand("output/{project}/{sid}/movement_filtered_offset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        rest_filter_offset = expand("output/{project}/{sid}/rest_filtered_offset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        offset_emg = expand("output/{project}/{sid}/emg/movement_offset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        offset_vm = expand("output/{project}/{sid}/vm/movement_offset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+
+        # Action potentials
         action_potentials = expand("output/{project}/{sid}/action_potentials.csv",
             project = config["project"],
             sid = samples["Location"])
     output:
-        report = "{deploy_directory}/final_emg_episodes.html"
+        report = "{deploy_directory}/analysis_vm_dynamics.html"
     params:
-        script = "reports/final_emg_episodes.Rmd"
+        script = "reports/vm_dynamics.Rmd"
     conda: "../env/r.yml"
     script: "../R/render.R"
 

@@ -1,5 +1,5 @@
-saveRDS(snakemake, ".filter_episodes.R.RDS")
-# snakemake <- readRDS(".filter_episodes.R.RDS")
+saveRDS(snakemake, ".filter_episodes_onset.R.RDS")
+# snakemake <- readRDS(".filter_episodes_onset.R.RDS")
 
 library(data.table)
 library(dplyr)
@@ -8,6 +8,7 @@ library(foreach)
 previousRestLength <- function(start, channel, data) {
   lastEpisode <- data[ Channel == channel ] %>%
     .[ Start < start ] %>%
+    .[ order(Start) ] %>%
     .[ .N ]
 
   if (nrow(lastEpisode) == 0) {
@@ -24,6 +25,7 @@ previousRestLength <- function(start, channel, data) {
 previousRestBefore <- function(start, channel, data) {
   lastEpisode <- data[ Channel == channel ] %>%
     .[ Start < start ] %>%
+    .[ order(Start) ] %>%
     .[ .N ]
 
   if (nrow(lastEpisode) == 0) {

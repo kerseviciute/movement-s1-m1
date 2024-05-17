@@ -57,16 +57,29 @@ rule vm_statistics:
 
 rule movement_onset_emg:
     input:
-        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered.csv",
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered_onset.csv",
         raw = lambda wildcards:
             "output/{project}/{animal_id}/{cell_name}/emg/raw.csv" if wildcards.type in ["emg"]
             else "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
     output:
-        onset_emg = "output/{project}/{animal_id}/{cell_name}/{type}/movement_onset.csv"
+        onset = "output/{project}/{animal_id}/{cell_name}/{type}/movement_onset.csv"
     params:
         sfreq = config["sampling_rate"]
     conda: "env/mne.yml"
     script: "python/movement_onset.py"
+
+rule movement_offset_emg:
+    input:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered_offset.csv",
+        raw = lambda wildcards:
+        "output/{project}/{animal_id}/{cell_name}/emg/raw.csv" if wildcards.type in ["emg"]
+        else "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
+    output:
+        offset = "output/{project}/{animal_id}/{cell_name}/{type}/movement_offset.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "env/mne.yml"
+    script: "python/movement_offset.py"
 
 rule fft:
     input:

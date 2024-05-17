@@ -2,8 +2,8 @@ import mne
 import pandas as pd
 import numpy as np
 
-pd.to_pickle(snakemake, ".movement_onset.py.pkl")
-# snakemake = pd.read_pickle(".movement_onset.py.pkl")
+pd.to_pickle(snakemake, ".movement_offset.py.pkl")
+# snakemake = pd.read_pickle(".movement_offset.py.pkl")
 
 with open(f"{snakemake.scriptdir}/to_mne.py", "r") as file:
     exec(file.read())
@@ -22,8 +22,8 @@ sample_data = raw.get_data()
 episode_data = []
 
 for i, episode in movement.iterrows():
-    start = episode["EventStart"] - round(sfreq * 0.5)
-    end = episode["EventStart"] + round(sfreq * 0.5)
+    start = episode["EventEnd"] - round(sfreq * 0.5)
+    end = episode["EventEnd"] + round(sfreq * 0.5)
     channel = episode["Channel"]
     episode_data.append(sample_data[channel][start:end])
 
@@ -32,4 +32,4 @@ episode_data = pd.DataFrame(episode_data)
 
 episode_data.index = movement["ID"]
 
-episode_data.to_csv(snakemake.output["onset"])
+episode_data.to_csv(snakemake.output["offset"])

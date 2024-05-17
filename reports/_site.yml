@@ -47,8 +47,8 @@ navbar:
           href: filtered_movement_vs_rest.html
     - text: Movement analysis
       menu:
-        - text: Filtering
-          href: final_emg_episodes.html
+        - text: Vm dynamics
+          href: analysis_vm_dynamics.html
         - text: FFT
           href: fft.hmtl
 output:
