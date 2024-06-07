@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.fft import fft, fftfreq
+from numpy.fft import rfft, rfftfreq
 
 pd.to_pickle(snakemake, ".fft.py.pkl")
 # snakemake = pd.read_pickle(".fft.py.pkl")
@@ -26,9 +26,8 @@ for _, episode in episodes.iterrows():
 
     y = sample_data[channel, start:end]
 
-    fft_res = 2.0 / len(y) * np.abs(fft(y)[0:len(y) // 2])
-
-    event_fft_freq = fftfreq(len(y), 1 / sfreq)[:len(y) // 2]
+    fft_res = np.abs(rfft(y))
+    event_fft_freq = rfftfreq(len(y), 1 / sfreq)
     fft_data.append(fft_res)
 
 fft_data = np.array(fft_data)

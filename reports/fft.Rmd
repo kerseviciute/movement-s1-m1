@@ -59,7 +59,7 @@ data <- rbind(movement, rest) %>%
   merge(samples, by = "SID")
 
 minFreq <- 2
-maxFreq <- 20
+maxFreq <- 50
 ```
 
 ---
