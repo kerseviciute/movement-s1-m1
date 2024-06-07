@@ -76,7 +76,8 @@ plots <- foreach(region = dt[ , unique(Region) ] %>% sort()) %do% {
     theme_light(base_size = 8) +
     theme(strip.background = element_rect(fill = "white")) +
     theme(strip.text = element_text(colour = "black")) +
-    expand_limits(y = c(-0.1, 0.5))
+    expand_limits(y = c(-0.1, 0.5)) +
+    xlab("Time, s")
 }
 
 ggarrange(
