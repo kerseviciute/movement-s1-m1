@@ -50,3 +50,6 @@ report:
     - filtered_movement_vs_rest
     - analysis_vm_dynamics
     - fft
+  supplementary:
+    - figure1.png
+    - figure2.png

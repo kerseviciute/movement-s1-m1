@@ -7,12 +7,17 @@ samples = pd.read_csv(config["sample_sheet"])
 include: "rules/emg.smk"
 include: "rules/vm.smk"
 include: "rules/reports.smk"
+include: "rules/figures.smk"
 
 rule all:
     input:
         expand("{deploy_directory}/{page}.html",
             deploy_directory = config["deploy_directory"],
             page = config["report"]["pages"]
+        ),
+        expand("{deploy_directory}/www/{supplementary}",
+            deploy_directory = config["deploy_directory"],
+            supplementary = config["report"]["supplementary"]
         )
 
 #
@@ -23,7 +28,7 @@ rule sample_sheet:
         data = "raw/cells patched_naive.xlsx"
     output:
         sample_sheet = config["sample_sheet"],
-        samples = expand("output/{project}/samples.RDS", project = config["project"])
+        samples = expand("output/{project}/samples.RDS",project = config["project"])
     conda: "env/r.yml"
     script: "R/sample_sheet.R"
 
