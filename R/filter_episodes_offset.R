@@ -5,11 +5,10 @@ library(data.table)
 library(dplyr)
 library(foreach)
 
-nextRestLength <- function(end, channel, data) {
+nextRestLength <- function(channel, data) {
   nextEpisode <- data[ Channel == channel ] %>%
-    .[ Start > end ] %>%
     .[ order(Start) ] %>%
-    .[ min(1, .N) ]
+    .[ min(which(ID == episode[ , ID ]) + 1, .N) ]
 
   if (nrow(nextEpisode) == 0) {
     return(0)
@@ -24,9 +23,8 @@ nextRestLength <- function(end, channel, data) {
 
 nextRestAfter <- function(end, channel, data) {
   nextEpisode <- data[ Channel == channel ] %>%
-    .[ Start > end ] %>%
     .[ order(Start) ] %>%
-    .[ min(1, .N) ]
+    .[ min(which(ID == episode[ , ID ]) + 1, .N) ]
 
   if (nrow(nextEpisode) == 0) {
     return(10)
@@ -46,7 +44,7 @@ data <- rbind(movement, rest)
 
 restLen <- foreach(i = seq_len(nrow(movement)), .combine = rbind) %do% {
   episode <- movement[ i ]
-  nextLength <- nextRestLength(end = episode[ , End ], channel = episode[ , Channel ], data = data)
+  nextLength <- nextRestLength(channel = episode[ , Channel ], data = data)
   nextAfter <- nextRestAfter(end = episode[ , End ], channel = episode[ , Channel ], data = data)
 
   data.table(
@@ -61,9 +59,11 @@ movement <- movement %>%
   merge(restLen) %>%
   .[ Length >= 0.5 ] %>%
   .[ NextRestLength >= 0.5 ] %>%
-  .[ NextRestAfter <= 0.25 ] %>%
+  # .[ NextRestAfter <= 0.5 ] %>%
   .[ , NextRestLength := NULL ] %>%
   .[ , NextRestAfter := NULL ]
+
+message("Number of movement episodes after filtering: ", nrow(movement))
 
 fwrite(rest, snakemake@output$rest)
 fwrite(movement, snakemake@output$movement)
