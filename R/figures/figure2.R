@@ -343,14 +343,6 @@ p14 <- emgData %>%
   theme(legend.margin = margin(b = -0.25, t = 0, unit = 'cm')) +
   theme(plot.margin = margin(l = 0.1, r = 0.5, unit = "cm"))
 
-plot <- ggarrange(
-  p13, p14,
-  ncol = 1,
-  nrow = 2,
-  labels = c("b", "c"),
-  font.label = list(size = 9)
-)
-
 ###############
 # P2 (b)
 ###############
@@ -521,20 +513,51 @@ p52 <- counts %>%
   theme(strip.text = element_text(colour = "black")) +
   scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
 
-ptop <- ggarrange(
-  p11, p12, plot, p2,
+
+#############################################
+
+p1 <- ggarrange(
+  p11,
+  p12 +
+    rremove("ylab") +
+    rremove("y.ticks") +
+    rremove("y.text"),
   nrow = 1,
-  labels = c("a", "", "", "d"),
+  widths = c(0.54, 0.46)
+)
+
+p5 <- ggarrange(
+  p51,
+  p52 +
+    rremove("ylab") +
+    rremove("y.ticks") +
+    rremove("y.text"),
+  nrow = 1,
+  widths = c(0.54, 0.46)
+)
+
+plot <- ggarrange(
+  p14, p13,
+  ncol = 1,
+  nrow = 2,
+  labels = c("a", "d"),
+  font.label = list(size = 9)
+)
+
+ptop <- ggarrange(
+  plot, p1, p2,
+  nrow = 1,
+  labels = c("", "b", "c"),
   font.label = list(size = 9),
-  widths = c(0.2, 0.2, 0.3, 0.3),
+  widths = c(0.3, 0.4, 0.3),
   common.legend = TRUE
 )
 
 pbottom <- ggarrange(
-  p3, p4, p51, p52,
+  p3, p4, p5,
   nrow = 1,
-  labels = c("d", "f", "e", ""),
-  widths = c(0.3, 0.3, 0.2, 0.2),
+  labels = c("e", "f", "g"),
+  widths = c(0.3, 0.3, 0.4),
   font.label = list(size = 9)
 )
 
