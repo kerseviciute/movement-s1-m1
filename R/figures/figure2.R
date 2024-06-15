@@ -208,7 +208,8 @@ p11 <- counts %>%
   ylab("Number of events") +
   theme(strip.background = element_rect(fill = "white")) +
   theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  expand_limits(y = 0)
 
 p12 <- counts %>%
   .[ Type == "Move" ] %>%
@@ -223,7 +224,8 @@ p12 <- counts %>%
   theme(legend.position = "top") +
   theme(strip.background = element_rect(fill = "white")) +
   theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  expand_limits(y = 0)
 
 
 emg <- fread("output/movement-s1-m1/W1/C2/emg/filter.csv")
@@ -433,7 +435,7 @@ counts <- stats %>%
   ), by = list(SID, Episode, Region, Animal = AnimalID) ] %>%
   .[ ]
 
-region_pairs <- list(
+regionPairs <- list(
   c("S1 L2/3", "S1 L5"),
   c("S1 L2/3", "M1 L5"),
   c("M1 L2/3", "M1 L5"),
@@ -442,18 +444,46 @@ region_pairs <- list(
   c("S1 L5", "M1 L2/3")
 )
 
-res <- foreach(pair = region_pairs, .combine = rbind) %do% {
-  foreach(type = c("Rest", "Move"), .combine = rbind) %do% {
-    dt <- counts[ Region %in% pair ][ Episode == type ]
-    fit <- lm(dt, formula = Average ~ Region + Length)
-    fit_res <- summary(fit) %>%
-      broom::tidy() %>%
-      as.data.table() %>%
-      .[ 2, list(estimate, p = p.value) ] %>%
-      .[ , p := ifelse(p < 0.001, scientific(p), round(p, 3)) ] %>%
-      .[ , group1 := pair[ 1 ] ] %>%
-      .[ , group2 := pair[ 2 ] ] %>%
-      .[ , group := type ]
+fitModelMean <- function(data) {
+  model.full <- lme4::lmer(
+    Mean ~ Region + Start + Length + (1 | SID),
+    data = data, REML = TRUE
+  )
+
+  model.null <- lme4::lmer(
+    Mean ~ Start + Length + (1 | SID),
+    data = data, REML = TRUE
+  )
+
+  list(
+    p.value = anova(model.full, model.null)$`Pr(>Chisq)`[ 2 ],
+    estimate = model.full %>%
+      summary() %>%
+      coef() %>%
+      as.data.table(keep.rownames = "FixedEffect") %>%
+      .[ FixedEffect == "Region2", Estimate ]
+  )
+}
+
+res <- foreach(episode = stats[ , unique(Episode) ], .combine = rbind) %do% {
+  foreach(pair = regionPairs, .combine = rbind) %do% {
+    dt <- stats %>%
+      .[ Episode == episode ] %>%
+      .[ Region %in% pair ] %>%
+      .[ Region == pair[ 1 ], Region := "1" ] %>%
+      .[ Region == pair[ 2 ], Region := "2" ] %>%
+      .[ , Region := factor(Region, levels = c("1", "2")) ]
+
+    fit <- fitModelMean(dt)
+
+    fit_res <- data.table(
+      Episode = episode,
+      group1 = pair[ 1 ],
+      group2 = pair[ 2 ],
+      p = ifelse(fit$p.value < 0.001, scientific(fit$p.value), round(fit$p.value, 3)),
+      # p = stars.pval(fit$p.value),
+      estimate = fit$estimate
+    )
 
     if (all(pair == region_pairs[ 1 ] %>% unlist())) {
       fit_res <- fit_res[ , y.position := counts[ , max(Average) ] + counts[ , max(abs(Average)) ] * 0.15 ]
@@ -483,20 +513,22 @@ res <- foreach(pair = region_pairs, .combine = rbind) %do% {
   }
 }
 
+
 p51 <- counts %>%
   .[ Episode == "Rest" ] %>%
   ggplot(aes(x = Region, y = Average)) +
   facet_grid(~Episode) +
   geom_boxplot(outlier.alpha = 0, linewidth = 0.25) +
   geom_jitter(height = 0, width = 0.2, alpha = 0.5, size = 1) +
-  stat_pvalue_manual(res[ group == "Rest" ], size = 2.5) +
+  stat_pvalue_manual(res[ Episode == "Rest" ], size = 2.5) +
   theme_light(base_size = 8) +
   xlab("") +
   theme(legend.position = "none") +
   ylab("Average membrane potential, mV") +
   theme(strip.background = element_rect(fill = "white")) +
   theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  expand_limits(y = -75)
 
 p52 <- counts %>%
   .[ Episode == "Move" ] %>%
@@ -504,14 +536,15 @@ p52 <- counts %>%
   facet_grid(~Episode) +
   geom_boxplot(outlier.alpha = 0, linewidth = 0.25) +
   geom_jitter(height = 0, width = 0.2, alpha = 0.5, size = 1) +
-  stat_pvalue_manual(res[ group == "Move" ], size = 2.5) +
+  stat_pvalue_manual(res[ Episode == "Move" ], size = 2.5) +
   theme_light(base_size = 8) +
   xlab("") +
   ylab("Average membrane potential, mV") +
   theme(legend.position = "none") +
   theme(strip.background = element_rect(fill = "white")) +
   theme(strip.text = element_text(colour = "black")) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  expand_limits(y = -75)
 
 
 #############################################
