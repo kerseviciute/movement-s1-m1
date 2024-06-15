@@ -6,8 +6,7 @@ pd.to_pickle(snakemake, ".vm_statistics.py.pkl")
 # snakemake = pd.read_pickle(".vm_statistics.py.pkl")
 
 
-vm = pd.read_pickle(snakemake.input["vm"])
-vm_data = vm.get_data()
+vm_data = pd.read_csv(snakemake.input["vm"], index_col = 0).to_numpy()
 
 action_potentials = pd.read_csv(snakemake.input["action_potentials"])
 movement = pd.read_csv(snakemake.input["movement"])

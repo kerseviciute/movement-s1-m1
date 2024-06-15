@@ -1,6 +1,7 @@
 ```{r, include = FALSE}
 # snakemake <- readRDS(".movement_vs_rest.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
 library(data.table)
 library(dplyr)
 library(foreach)
@@ -18,28 +19,28 @@ samples <- fread(snakemake@input$samples) %>%
   .[ , Region := gsub(Region, pattern = "23", replacement = "2/3") ] %>%
   .[ , Layer := gsub(Layer, pattern = "23", replacement = "2/3") ]
 
-movement <- foreach(file = snakemake@input$movement, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/movement_episodes.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+movement <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$movement, sample[ , AnimalID ], sample[ , CellName ])) %>%
+    .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 
-rest <- foreach(file = snakemake@input$rest, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/rest_episodes.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+rest <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$rest, sample[ , AnimalID ], sample[ , CellName ])) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 
-ap <- foreach(file = snakemake@input$action_potentials, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/action_potentials.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+ap <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$action_potentials, sample[ , AnimalID ], sample[ , CellName ])) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 }
 
-stats <- foreach(file = snakemake@input$statistics, .combine = rbind) %do% {
-  sid <- gsub(file, pattern = ".*(W./C.*)/vm_statistics.csv", replacement = "\\1") %>% gsub(pattern = "/", replacement = "_")
-  fread(file) %>%
-    .[ , SID := sid ]
+stats <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
+  sample <- samples[ i ]
+  fread(getSampleFile(snakemake@input$statistics, sample[ , AnimalID ], sample[ , CellName ])) %>%
+          .[ , SID := paste(sample[ , AnimalID ], sample[ , CellName ], sep = "_") ]
 } %>%
   merge(samples, by = "SID") %>%
   merge(rbind(movement, rest), by = c("ID", "SID")) %>%
@@ -278,17 +279,100 @@ title: `r config$report$title`
 
 # Movement vs Rest {.tabset .tabset-pills}
 
-## Episode counts {.unnumbered .unlisted}
+**Table 1.** Average number of detected movement and rest episodes.
 
-```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
+```{r, include = TRUE}
 counts <- rbind(
-  movement[ , list(Count = .N, Episode = "Movement"), by = SID ],
-  rest[ , list(Count = .N, Episode = "Rest"), by = SID ]
+  movement[ , list(Count = .N, Trials = max(Channel), Episode = "Movement", Time = sum(Length)), by = SID ],
+  rest[ , list(Count = .N, Trials = max(Channel), Episode = "Rest", Time = sum(Length)), by = SID ]
 ) %>% merge(samples, by = "SID")
 
 stopifnot(all(counts[ Episode == "Movement", SID ] %in% samples[ , SID ]))
 stopifnot(all(counts[ Episode == "Rest", SID ] %in% samples[ , SID ]))
 
+counts[ , list(Mean = round(mean(Count)), SD = round(sd(Count))), by = Episode ] %>%
+  showTable()
+```
+
+```{r, include = TRUE, fig.height = 3.2}
+averageTime <- rbind(movement, rest) %>%
+  .[ , Episode := ifelse(Movement == TRUE, "Movement", "Rest") ] %>%
+  .[ , list(AverageTime = mean(Length)), by = list(SID, Episode) ] %>%
+  merge(samples, by = "SID")
+
+p1 <- averageTime %>%
+  ggplot(aes(x = Layer, y = AverageTime)) +
+  facet_grid(~Episode) +
+  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+  geom_point(alpha = 0.5, size = 1) +
+  xlab("") +
+  ylab("Average length, ms") +
+  stat_compare_means(comparisons = list(c("L2/3", "L5")), size = 2.5, method = "t") +
+  theme_light(base_size = 8) +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  expand_limits(y = 0)
+
+p2 <- averageTime %>%
+  ggplot(aes(x = Cortex, y = AverageTime)) +
+  facet_grid(~Episode) +
+  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+  geom_point(alpha = 0.5, size = 1) +
+  xlab("") +
+  ylab("Average length, ms") +
+  stat_compare_means(comparisons = list(c("M1", "S1")), size = 2.5, method = "t") +
+  theme_light(base_size = 8) +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  expand_limits(y = 0)
+
+totalTime <- counts[ , list(TotalTime = max(Trials) * 10), by = SID ]
+
+timeEval <- counts %>%
+  merge(totalTime, by = "SID") %>%
+  .[ , list(SID, TimeFraction = Time / TotalTime, Episode, Layer, Cortex) ]
+
+p3 <- timeEval %>%
+  ggplot(aes(x = Layer, y = TimeFraction * 100)) +
+  facet_grid(~Episode) +
+  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+  geom_point(alpha = 0.5, size = 1) +
+  xlab("") +
+  ylab("Fraction of time, %") +
+  stat_compare_means(comparisons = list(c("L2/3", "L5")), size = 2.5, method = "t") +
+  theme_light(base_size = 8) +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  scale_y_continuous(limits = c(0, 100), expand = expansion(mult = c(0.1, 0.1)))
+
+p4 <- timeEval %>%
+  ggplot(aes(x = Cortex, y = TimeFraction * 100)) +
+  facet_grid(~Episode) +
+  geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
+  geom_point(alpha = 0.5, size = 1) +
+  xlab("") +
+  ylab("Fraction of time, %") +
+  stat_compare_means(comparisons = list(c("M1", "S1")), size = 2.5, method = "t") +
+  theme_light(base_size = 8) +
+  theme(strip.background = element_rect(fill = "white")) +
+  theme(strip.text = element_text(colour = "black")) +
+  scale_y_continuous(limits = c(0, 100), expand = expansion(mult = c(0.1, 0.1)))
+
+ggarrange(
+  p1, p2, p3, p4,
+  nrow = 1,
+  labels = letters[1:4],
+  font.label = list(size = 10)
+)
+```
+
+Statistics of detected movement and rest episodes: average episode length, comparing (a) layers and (b) cortices, and the fraction of time spent in each condition, comparing (c) layers and (d) cortices. The differences between group means were evaluated using t-test.
+
+## Episode counts {.unnumbered .unlisted}
+
+```{r, include = TRUE, warning = FALSE, fig.height = 5.4}
 plot_statistics(
   data = counts,
   variable = "Count",

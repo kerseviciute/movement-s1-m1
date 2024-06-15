@@ -1,0 +1,133 @@
+```{r, include = FALSE}
+# snakemake <- readRDS(".fft.Rmd.RDS")
+snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(foreach)
+
+config <- snakemake@config
+
+samples <- fread(snakemake@input$samples) %>%
+  .[ , Region := gsub(Region, pattern = "_", replacement = " ") ] %>%
+  .[ , Region := gsub(Region, pattern = "23", replacement = "2/3") ] %>%
+  .[ , Layer := gsub(Layer, pattern = "23", replacement = "2/3") ]
+
+movement <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
+  sample <- samples[ SID == sid ]
+  getSampleFile(snakemake@input$movement, animalId = sample[ , AnimalID ], cellName = sample[ , CellName ]) %>%
+    fread() %>%
+    apply(2, mean)
+}
+rownames(movement) <- samples[ , SID ]
+
+rest <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
+  sample <- samples[ SID == sid ]
+  getSampleFile(snakemake@input$rest, animalId = sample[ , AnimalID ], cellName = sample[ , CellName ]) %>%
+    fread() %>%
+    apply(2, mean)
+}
+rownames(rest) <- samples[ , SID ]
+
+dt <- read.csv(snakemake@input$movement[ 1 ])
+freqKey <- data.table(
+  Frequency = colnames(dt) %>%
+    gsub(pattern = "X", replacement = "") %>%
+    as.numeric(),
+  Colname = colnames(movement)
+)
+
+movement <- movement %>%
+  reshape2::melt() %>%
+  as.data.table() %>%
+  setnames(c("SID", "Colname", "FFT")) %>%
+  merge(freqKey, by = "Colname") %>%
+  .[ , Colname := NULL ] %>%
+  .[ , Type := "Movement" ]
+
+rest <- rest %>%
+  reshape2::melt() %>%
+  as.data.table() %>%
+  setnames(c("SID", "Colname", "FFT")) %>%
+  merge(freqKey, by = "Colname") %>%
+  .[ , Colname := NULL ] %>%
+  .[ , Type := "Rest" ]
+
+data <- rbind(movement, rest) %>%
+  merge(samples, by = "SID")
+
+minFreq <- 2
+maxFreq <- 50
+```
+
+---
+date: <small>`r Sys.Date()`</small>
+author: <small>`r config$report$author`</small>
+title: `r config$report$title`
+---
+
+# FFT analysis
+
+```{r, include = TRUE, fig.height = 4.2}
+p1 <- data %>%
+  .[ , list(Power = mean(FFT)), by = list(Type, Frequency) ] %>%
+  .[ Frequency >= minFreq ] %>%
+  .[ Frequency <= maxFreq ] %>%
+  ggplot() +
+  geom_line(aes(x = Frequency, y = Power, linetype = Type)) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "right") +
+  theme(legend.spacing.y = unit(0.02, "cm")) +
+  ylab("Power") +
+  expand_limits(y = 0)
+
+p2 <- data %>%
+  .[ , list(Power = mean(FFT)), by = list(Type, Region, Frequency) ] %>%
+  .[ Frequency >= minFreq ] %>%
+  .[ Frequency <= maxFreq ] %>%
+  ggplot() +
+  geom_line(aes(x = Frequency, y = Power, color = Region, linetype = Type)) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "right") +
+  theme(legend.spacing.y = unit(0.02, "cm")) +
+  ylab("Power") +
+  expand_limits(y = 0)
+
+p3 <- data %>%
+  .[ , list(Power = mean(FFT)), by = list(Frequency, Layer, Type) ] %>%
+  .[ Frequency >= minFreq ] %>%
+  .[ Frequency <= maxFreq ] %>%
+  .[ order(Frequency) ] %>%
+  ggplot() +
+  geom_line(aes(x = Frequency, y = Power, color = Layer, linetype = Type)) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "right") +
+  theme(legend.spacing.y = unit(0.02, "cm")) +
+  ylab("Power") +
+  expand_limits(y = 0)
+
+p4 <- data %>%
+  .[ , list(Power = mean(FFT)), by = list(Frequency, Cortex, Type) ] %>%
+  .[ Frequency >= minFreq ] %>%
+  .[ Frequency <= maxFreq ] %>%
+  .[ order(Frequency) ] %>%
+  ggplot() +
+  geom_line(aes(x = Frequency, y = Power, color = Cortex, linetype = Type)) +
+  theme_light(base_size = 8) +
+  theme(legend.position = "right") +
+  theme(legend.spacing.y = unit(0.02, "cm")) +
+  ylab("Power") +
+  expand_limits(y = 0)
+
+ggarrange(
+  ggarrange(p1, p2, nrow = 1, labels = letters[ 1:2 ], font.label = list(size = 10)),
+  ggarrange(p3, p4, nrow = 1, labels = letters[ 3:4 ], font.label = list(size = 10)),
+  nrow = 2
+)
+```
+
+**Figure 1.** Grand average of the FFT of the $V_m$ computed for 5-s epochs during episodes of movement
+and rest, comparing overall activity in all regions of interest **(a)**, as well as separated by region **(b)**,
+layer **(c)**, and cortex **(d)**.

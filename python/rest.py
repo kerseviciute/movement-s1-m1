@@ -11,30 +11,32 @@ with open(f"{snakemake.scriptdir}/movement_methods.py", "r") as file:
 with open(f"{snakemake.scriptdir}/rest_methods.py", "r") as file:
     exec(file.read())
 
-data = pd.read_pickle(snakemake.input["data"])
-sample_data = data.get_data()
+sample_data = pd.read_csv(snakemake.input["data"], index_col = 0)
+trials = sample_data.index
 
-min_break = data.info["sfreq"] * snakemake.params["maxTimeApart"]
-min_event_length = data.info["sfreq"] * snakemake.params["minEventLength"]
+sfreq = snakemake.params["sfreq"]
+min_break = sfreq * snakemake.params["maxTimeApart"]
+min_event_length = sfreq * snakemake.params["minEventLength"]
 percentile = snakemake.params["percentile"]
 
 # Apply low frequency filter on all channels
 filtered_data = []
-for channel in sample_data:
-    filtered_data.append(filter_emg(channel, low_freq = 20, sfreq = data.info["sfreq"]))
+for i, _ in enumerate(trials):
+    trial = sample_data.iloc[i]
+    filtered_data.append(filter_emg(trial, low_freq = 20, sfreq = sfreq))
 filtered_data = np.array(filtered_data)
 
 threshold = np.percentile(np.abs(sample_data), percentile)
 
 episodes = []
 
-for i, _ in enumerate(data.ch_names):
+for i, _ in enumerate(trials):
     signal = filtered_data[i]
 
     ch_episodes = detect_rest_episodes(
         signal = signal,
         threshold = threshold,
-        sfreq = data.info["sfreq"],
+        sfreq = sfreq,
         min_break = min_break
     )
     ch_episodes["Channel"] = i

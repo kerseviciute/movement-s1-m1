@@ -50,7 +50,7 @@ def find_ap(signal, time, threshold = 1.5):
             "EventStart": [onset],
             "EventEnd": [offset],
             "Start": [time[onset]],
-            "End": [time[onset]],
+            "End": [time[offset]],
             "MaxVm": [np.max(signal[onset:offset])]
         }))
 

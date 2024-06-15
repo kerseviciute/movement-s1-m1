@@ -1,30 +1,73 @@
 ## `r animalId` `r cellName` {.unlisted .unnumbered}
 
-```{python}
-prefix = f"{r.prefix}/{r.animalId}/{r.cellName}"
+```{r}
+data <- fread(getSampleFile(snakemake@input$vm_filter, animalId, cellName))
+x <- as.matrix(data[ 2:nrow(data), 2:ncol(data) ])
+rownames(x) <- data[ 2:nrow(data), V1 ]
+time <- data.table(Index = colnames(data)[ 2:ncol(data) ]) %>%
+  .[ , Time := seq(0, 10, 1 / 20000) ] %>%
+  .[ ]
 
-vm = pd.read_pickle(f"{prefix}/vm/filter.pkl")
-ap = pd.read_csv(f"{prefix}/action_potentials.csv")
+vmData <- x %>%
+  reshape2::melt() %>%
+  as.data.table() %>%
+  setnames(c("Trial", "Index", "Value")) %>%
+  merge(time, by = "Index") %>%
+  .[ , Trial := factor(Trial, levels = data[ 2:nrow(data), V1 ]) ]
+
+aps <- fread(getSampleFile(snakemake@input$action_potentials, animalId, cellName)) %>%
+  .[ , Trial := levels(vmData[ , Trial ])[ Channel + 1 ] ] %>%
+  .[ , ID := make.names(1:.N) ]
+
+apData <- foreach(i = seq_len(nrow(aps)), .combine = rbind) %do% {
+  ap <- aps[ i ]
+  vmData[ Trial == ap[ , Trial ] ] %>%
+    .[ Time >= ap[ , Start ] ] %>%
+    .[ Time <= ap[ , End ] ] %>%
+    .[ , ID := ap[ , ID ] ]
+}
 ```
 
 The Vm data were not filtered nor centered.
 
 Action potentials (APs) were detected using the first derivative of the membrane potential, $V_m'$. The onset
 of the AP was defined as the time point where $V_m'$ exceeded 22 mV/ms. The offset of the AP was defined as
-the time point 2 ms after the AP peak ($V_m' = 0$ mV/ms).
+the time point 2 ms after the AP peak ($V_m' = 0$ mV/ms). '
 
-```{python, include = TRUE}
-plot_all_events(vm, channels = vm.ch_names, movement = ap, limit = [-100, 10])
+```{r, include = TRUE, fig.height = vmData[ , length(unique(Trial))] * 0.3 + 0.1}
+p <- vmData %>%
+  ggplot() +
+  facet_wrap(~Trial, ncol = 1) +
+  geom_line(aes(x = Time, y = Value), linewidth = 0.05) +
+  theme_light(base_size = 8) +
+  scale_x_continuous(limits = c(0, 10), expand = c(0, 0)) +
+  theme(panel.spacing = unit(0, "lines")) +
+  theme(strip.background = element_blank()) +
+  theme(strip.text.x = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  theme(axis.text.y = element_blank()) +
+  theme(axis.ticks.y = element_blank()) +
+  ylab("")
+
+# Only if there are detected action potentials
+if (nrow(aps) != 0) {
+  p <- p + geom_line(data = apData, aes(x = Time, y = Value, group = ID), linewidth = 0.25, color = "red")
+}
+
+p
 ```
 
 **Figure 1.** Membrane potential in animal `r animalId` cell `r cellName`. Detected action potentials
 are marked in red.
 
-```{python, include = TRUE}
-vm_data = vm.get_data()
-plt.figure(figsize = (20, 4))
-plt.plot(np.concatenate(vm_data), linewidth = 0.5)
-plt.show()
+```{r, include = TRUE, fig.height = 2.2}
+vmData %>%
+  .[ , Channel := as.numeric(Trial) ] %>%
+  .[ , Time := Time + 10 * (Channel - 1) ] %>%
+  ggplot() +
+  geom_line(aes(x = Time, y = Value), linewidth = 0.05) +
+  theme_light(base_size = 8) +
+  ylab("")
 ```
 
 **Figure 2.** Continuous membrane potential data through all the trials.

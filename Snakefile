@@ -32,10 +32,12 @@ rule sample_sheet:
 #
 rule correlation:
     input:
-        emg = "output/{project}/{animal_id}/{cell_name}/emg/filter.pkl",
-        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl"
+        emg = "output/{project}/{animal_id}/{cell_name}/emg/filter.csv",
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
     output:
         correlation = "output/{project}/{animal_id}/{cell_name}/lagged_correlation.csv"
+    params:
+        sfreq = config["sampling_rate"]
     conda: "env/mne.yml"
     script: "python/correlation_lag.py"
 
@@ -44,7 +46,7 @@ rule correlation:
 #
 rule vm_statistics:
     input:
-        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.pkl",
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.csv",
         action_potentials = "output/{project}/{animal_id}/{cell_name}/action_potentials.csv",
         movement = "output/{project}/{animal_id}/{cell_name}/movement_episodes.csv",
         rest = "output/{project}/{animal_id}/{cell_name}/rest_episodes.csv"
@@ -52,3 +54,40 @@ rule vm_statistics:
         statistics = "output/{project}/{animal_id}/{cell_name}/vm_statistics.csv"
     conda: "env/mne.yml"
     script: "python/vm_statistics.py"
+
+rule movement_onset_emg:
+    input:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered_onset.csv",
+        raw = lambda wildcards:
+            "output/{project}/{animal_id}/{cell_name}/emg/raw.csv" if wildcards.type in ["emg"]
+            else "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
+    output:
+        onset = "output/{project}/{animal_id}/{cell_name}/{type}/movement_onset.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "env/mne.yml"
+    script: "python/movement_onset.py"
+
+rule movement_offset_emg:
+    input:
+        movement = "output/{project}/{animal_id}/{cell_name}/movement_filtered_offset.csv",
+        raw = lambda wildcards:
+        "output/{project}/{animal_id}/{cell_name}/emg/raw.csv" if wildcards.type in ["emg"]
+        else "output/{project}/{animal_id}/{cell_name}/vm/filter.csv"
+    output:
+        offset = "output/{project}/{animal_id}/{cell_name}/{type}/movement_offset.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "env/mne.yml"
+    script: "python/movement_offset.py"
+
+rule fft:
+    input:
+        vm = "output/{project}/{animal_id}/{cell_name}/vm/filter.csv",
+        episodes = "output/{project}/{animal_id}/{cell_name}/{type}_episodes.csv"
+    output:
+        fft = "output/{project}/{animal_id}/{cell_name}/{type}_fft.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "env/mne.yml"
+    script: "python/fft.py"

@@ -10,17 +10,18 @@ with open(f"{snakemake.scriptdir}/action_potential_methods.py", "r") as file:
 
 print(f"Detecting action potentials in cell {snakemake.wildcards['animal_id']} {snakemake.wildcards['cell_name']}")
 
-vm = pd.read_pickle(snakemake.input["vm"])
-data = vm.get_data()
-time = vm.times
+sfreq = snakemake.params["sfreq"]
+data = pd.read_csv(snakemake.input["vm"], index_col = 0)
+time = np.array(data.columns.values, dtype = float) / sfreq
+trials = data.index.values
 
 diffThreshold = snakemake.params["diffThreshold"]
 minReachedVoltage = snakemake.params["minReachedVoltage"]
 
 aps = []
 
-for i, _ in enumerate(vm.ch_names):
-    signal = data[i, :]
+for i, _ in enumerate(trials):
+    signal = data.iloc[i]
 
     channel_ap = find_ap(signal, time, threshold = diffThreshold)
 

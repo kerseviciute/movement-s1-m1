@@ -12,27 +12,45 @@ navbar:
       - text: AP detection
         href: vm_S1_L23.html
       - text: Movement detection
-        href: emg_S1_L23.html
+        href: episodes_emg_S1_L23.html
+      - text: Filtered episodes
+        href: filtered_emg_S1_L23.html
     - text: S1 L5
       menu:
         - text: AP detection
           href: vm_S1_L5.html
         - text: Movement detection
-          href: emg_S1_L5.html
+          href: episodes_emg_S1_L5.html
+        - text: Filtered episodes
+          href: filtered_emg_S1_L5.html
     - text: M1 L2/3
       menu:
         - text: AP detection
           href: vm_M1_L23.html
         - text: Movement detection
-          href: emg_M1_L23.html
+          href: episodes_emg_M1_L23.html
+        - text: Filtered episodes
+          href: filtered_emg_M1_L23.html
     - text: M1 L5
       menu:
         - text: AP detection
           href: vm_M1_L5.html
         - text: Movement detection
-          href: emg_M1_L5.html
-    - text: Movement vs Rest
-      href: movement_vs_rest.html
+          href: episodes_emg_M1_L5.html
+        - text: Filtered episodes
+          href: filtered_emg_M1_L5.html
+    - text: Movement vs rest
+      menu:
+        - text: All episodes
+          href: episodes_movement_vs_rest.html
+        - text: Filtered episodes
+          href: filtered_movement_vs_rest.html
+        - text: FFT
+          href: fft.hmtl
+    - text: Movement analysis
+      menu:
+        - text: Vm dynamics
+          href: analysis_vm_dynamics.html
 output:
   html_document:
     self_contained: true

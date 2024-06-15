@@ -99,11 +99,16 @@ detected episodes for now.
 ### Mar 26
 
 - [ ] **kursinio planas**
-- [ ] pretty graph with all samples to show that EMG onset is good
-- [ ] EMG event filtering (min time: 0.5 s, 400ms offset, 400ms onset)
-- [ ] frequency analysis (movement on / movement off): 2-100 Hz, >=0.5s
+- [x] pretty graph with all samples to show that EMG onset is good
+- [x] EMG event filtering (min time: 0.5 s, 400ms offset, 400ms onset)
+  - [x] Add figure 3 from the previous analysis
+- [x] frequency analysis (movement on / movement off): 2-100 Hz, >=0.5s
 - [ ] compare conductance during on/off
 - [ ] add method descriptions to reports
   - [ ] index (how to use the website)
   - [ ] correlation analysis
   - [ ] EMG (filtering + movement detection)
+
+**To look into**
+
+- [ ] AP detection in some files is suspicious (e.g. S1 L23 W1 C8). Seems like some APs are detected twice?

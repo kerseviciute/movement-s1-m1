@@ -1,15 +1,16 @@
 ```{r, include = FALSE}
 # snakemake <- readRDS(".vm.Rmd.RDS")
 snakemake@source("R/rmd_setup.R")
+snakemake@source("R/getSampleFile.R")
 library(foreach)
 library(data.table)
 library(dplyr)
 library(glue)
+library(ggplot2)
 
 config <- snakemake@config
 
 scriptdir <- snakemake@scriptdir
-prefix <- snakemake@params$prefix
 region <- snakemake@wildcards$region
 
 samples <- fread(snakemake@input$samples)
@@ -33,7 +34,7 @@ title: `r config$report$title`
 actionPotentials <- foreach(sid = samples[ , SID ], .combine = rbind) %do% {
   sample <- samples[ SID == sid ]
 
-  filename <- glue("{prefix}/{sample[ , Location ]}/action_potentials.csv")
+  filename <- getSampleFile(snakemake@input$action_potentials, sample[ , AnimalID ], sample[ , CellName ])
 
   fread(filename) %>%
     .[ , SID := sid ]
@@ -46,16 +47,6 @@ counts <- rbind(
   .[ match(samples[ , SID ], SID) ]
 
 counts %>% showTable()
-```
-
-```{python python_setup}
-import mne
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-with open(f"{r.scriptdir}/python/plot_all_events.py", "r") as file:
-    exec(file.read())
 ```
 
 ```{r results}
