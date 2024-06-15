@@ -1,5 +1,5 @@
 saveRDS(snakemake, ".figure1.R.RDS")
-snakemake <- readRDS(".figure1.R.RDS")
+# snakemake <- readRDS(".figure1.R.RDS")
 
 snakemake@source("../rmd_setup.R")
 
@@ -70,6 +70,7 @@ p1 <- dt[ ,
   list(Correlation = mean(Correlation)),
   by = list(Time, Region)
 ] %>%
+  .[ , Time := as.numeric(Time) ] %>%
   ggplot() +
   geom_line(aes(x = Time, y = Correlation, color = Region), linewidth = 0.5) +
   geom_text(data = annotation, aes(x = Time, y = Correlation + 0.005, label = Significance)) +
@@ -78,7 +79,9 @@ p1 <- dt[ ,
   theme(legend.margin = margin(0, 0, 0, 0)) +
   theme(legend.box.margin = margin(-5, 0, -5, 0)) +
   guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
-  expand_limits(y = c(0, 0.4))
+  theme(legend.title=element_blank()) +
+  expand_limits(y = c(0, 0.4)) +
+  xlab("Time, s")
 
 p2 <- dt %>%
   .[ Correlation == MaxCorrelation ] %>%
@@ -94,7 +97,9 @@ p2 <- dt %>%
   theme(legend.position = "top") +
   theme(legend.margin = margin(0, 0, 0, 0)) +
   theme(legend.box.margin = margin(-5, 0, -5, 0)) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  theme(legend.title=element_blank()) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  ylab("Time, s")
 
 p3 <- dt %>%
   .[ Correlation == MaxCorrelation ] %>%
@@ -110,7 +115,10 @@ p3 <- dt %>%
   theme(legend.position = "top") +
   theme(legend.margin = margin(0, 0, 0, 0)) +
   theme(legend.box.margin = margin(-5, 0, -5, 0)) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  # guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+  theme(legend.title=element_blank()) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  ylab("Time, s")
 
 p4 <- dt %>%
   .[ Correlation == MaxCorrelation ] %>%
@@ -134,37 +142,17 @@ p4 <- dt %>%
     size = 2.5
   ) +
   theme_light(base_size = 8) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  xlab("")
 
-p5 <- dt %>%
-  .[ Time == 0 ] %>%
-  ggplot(aes(x = Region, y = Correlation)) +
-  geom_boxplot(linewidth = 0.25, outlier.alpha = 0) +
-  geom_jitter(size = 0.5, alpha = 0.5, color = "black", height = 0, width = 0.25) +
-  stat_compare_means(
-    comparisons = list(
-      c("M1 L2/3", "M1 L5"),
-      c("M1 L5", "S1 L2/3"),
-      c("M1 L2/3", "S1 L2/3"),
-      c("M1 L5", "S1 L5"),
-      c("M1 L2/3", "S1 L5")
-    ),
-    size = 2.5
-  ) +
-  stat_compare_means(
-    comparisons = list(
-      c("S1 L2/3", "S1 L5")
-    ),
-    size = 2.5
-  ) +
-  theme_light(base_size = 8) +
-  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
 
 fig <- ggarrange(
-	ggarrange(p1, p2, p3, nrow = 1, labels = letters[ 1:3 ], font.label = list(size = 9)),
-	ggarrange(p4, p5, nrow = 1, labels = letters[ 4:5 ], font.label = list(size = 9)),
-	ncol = 1, nrow = 2
+	p1, p3, p2, p4,
+    nrow = 1,
+    labels = letters[ 1:4 ],
+    font.label = list(size = 9),
+	widths = c(0.3, 0.2, 0.2, 0.3)
 )
 
-ggsave(fig, filename = snakemake@output$figure, height = 5, width = 6)
+ggsave(fig, filename = snakemake@output$figure, height = 2.5, width = 8.5)
 
