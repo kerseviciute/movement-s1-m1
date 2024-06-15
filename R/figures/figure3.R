@@ -170,7 +170,6 @@ for (region in c("S1 L23", "S1 L5", "M1 L23", "M1 L5")) {
     xlab("") +
     scale_colour_manual(values = c("B" = colors[ 1 ], "P" = colors[ 2 ], "O" = colors[ 3 ], "L" = colors[ 4 ]))
 
-
   p4 <- actionPotentials %>%
     .[ Region == region ] %>%
     ggplot() +
@@ -206,4 +205,4 @@ for (region in c("S1 L23", "S1 L5", "M1 L23", "M1 L5")) {
 
 final <- ggarrange(plotlist = plot, ncol = 4)
 
-ggsave(final, filename = snakemake@output$figure, height = 6, width = 8.5, bg = "white", dpi = 1000)
+ggsave(final, filename = snakemake@output$figure, height = 8, width = 8.5, bg = "white", dpi = 1000)
