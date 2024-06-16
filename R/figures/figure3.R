@@ -11,6 +11,14 @@ library(wesanderson)
 library(ggpubr)
 library(cowplot)
 library(RColorBrewer)
+library(scales)
+
+stars.pval <- function(x) {
+  stars <- c("***", "**", "*", "n.s.")
+  var <- c(0, 0.01, 0.05, 0.10, 1)
+  i <- findInterval(x, var, left.open = T, rightmost.closed = T)
+  stars[ i ]
+}
 
 config <- snakemake@config
 
@@ -48,6 +56,10 @@ eventData <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
   x <- as.matrix(data[ 2:nrow(data), 2:ncol(data) ])
   rownames(x) <- data[ 2:nrow(data), V1 ]
 
+  moveData <- fread(getSampleFile(snakemake@input$movement_filter, sample[ , AnimalID ], sample[ , CellName ])) %>%
+    .[ , Onset := Start + (Channel - 1) * 10 ] %>%
+    .[ , list(ID, Onset, Length) ]
+
   x %>%
     reshape2::melt() %>%
     setDT() %>%
@@ -59,7 +71,9 @@ eventData <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
     .[ Time >= -0.1 & Time <= 0, Type := "Pre-movement" ] %>%
     .[ Time > 0 & Time <= 0.2, Type := "Movement onset" ] %>%
     .[ Time > 0.2 & Time <= 0.4, Type := "Late movement" ] %>%
-    .[ , Region := paste(sample[ , Cortex ], sample[ , Layer ]) ]
+    .[ , Region := paste(sample[ , Cortex ], sample[ , Layer ]) ] %>%
+    merge(moveData, by = "ID") %>%
+    .[ ]
 }
 
 average_data <- eventData %>%
@@ -92,6 +106,79 @@ actionPotentials <- foreach(i = seq_len(nrow(samples)), .combine = rbind) %do% {
     .[ , Region := paste(sample[ , Cortex ], sample[ , Layer ]) ]
 }
 
+fitModel <- function(data) {
+  model.full <- lme4::lmer(
+    variable ~ Type + Onset + Length + (1 | SID),
+    data = data, REML = TRUE
+  )
+
+  model.null <- lme4::lmer(
+    variable ~ Onset + Length + (1 | SID),
+    data = data, REML = TRUE
+  )
+
+  list(
+    p.value = anova(model.full, model.null)$`Pr(>Chisq)`[ 2 ],
+    estimate = model.full %>%
+      summary() %>%
+      coef() %>%
+      as.data.table(keep.rownames = "FixedEffect") %>%
+      .[ FixedEffect == "Type2", Estimate ]
+  )
+}
+
+fitModelForAll <- function(data) {
+  dataAverage <- data %>%
+    .[ , list(variable = mean(variable)), by = list(SID, Type) ]
+
+  typePairs <- list(
+    c("B", "P"),
+    c("O", "L"),
+    c("P", "O"),
+    c("B", "L")
+  )
+
+  modelResult <- foreach(pair = typePairs, .combine = rbind) %do% {
+    dt <- data %>%
+      .[ Type %in% pair ] %>%
+      .[ Type == pair[1], Type := "1" ] %>%
+      .[ Type == pair[2], Type := "2" ] %>%
+      .[ , Type := factor(Type, levels = c("1", "2")) ]
+    fit <- fitModel(dt)
+
+    fit_res <- data.table(
+      Region = region,
+      group1 = pair[1],
+      group2 = pair[2],
+      p = stars.pval(fit$p.value),
+      estimate = fit$estimate
+    )
+
+    if (all(pair == typePairs[ 1 ] %>% unlist())) {
+      fit_res <- fit_res[ , y.position := dataAverage[ , max(variable) ] + dataAverage[ , max(abs(variable)) ] * 0.15 ]
+    }
+
+    if (all(pair == typePairs[ 2 ] %>% unlist())) {
+      fit_res <- fit_res[ , y.position := dataAverage[ , max(variable) ] + dataAverage[ , max(abs(variable)) ] * 0.15 ]
+    }
+
+    if (all(pair == typePairs[ 3 ] %>% unlist())) {
+      fit_res <- fit_res[ , y.position := dataAverage[ , max(variable) ] + dataAverage[ , max(abs(variable)) ] * 0.3 ]
+    }
+
+    if (all(pair == typePairs[ 4 ] %>% unlist())) {
+      fit_res <- fit_res[ , y.position := dataAverage[ , max(variable) ] + dataAverage[ , max(abs(variable)) ] * 0.45 ]
+    }
+
+    fit_res
+  }
+
+  list(
+    modelResult = modelResult,
+    dataAverage = dataAverage
+  )
+}
+
 plot <- list()
 for (region in c("S1 L23", "S1 L5", "M1 L23", "M1 L5")) {
   vm_range <- average_data[ , range(Vm) ]
@@ -120,7 +207,7 @@ for (region in c("S1 L23", "S1 L5", "M1 L23", "M1 L5")) {
     ylim(min(vm_range), max(vm_range) + 0.5)
 
   typeAverage <- eventData[ Region == region ] %>%
-    .[ , list(Vm = mean(Vm), SD = sd(Vm)), by = list(SID, Type) ] %>%
+    .[ , list(Vm = mean(Vm), SD = sd(Vm)), by = list(SID, Type, ID, Onset, Length) ] %>%
     .[ Type != "None" ] %>%
     .[ Type == "Baseline", Type := "B" ] %>%
     .[ Type == "Pre-movement", Type := "P" ] %>%
@@ -128,21 +215,17 @@ for (region in c("S1 L23", "S1 L5", "M1 L23", "M1 L5")) {
     .[ Type == "Late movement", Type := "L" ] %>%
     .[ , Type := factor(Type, levels = c("B", "P", "O", "L")) ] %>%
     .[ , Animal := gsub(x = SID, pattern = "(W[0-9]).*", replacement = "\\1") ] %>%
-    .[ , Animal := factor(Animal, levels = c("W1", "W2", "W3", "W4")) ]
+    .[ , Animal := factor(Animal, levels = c("W1", "W2", "W3", "W4")) ] %>%
+    setnames("Vm", "variable")
 
-  p2 <- typeAverage %>%
-    ggpaired(x = "Type", y = "Vm", id = "SID",
+  res <- fitModelForAll(typeAverage)
+
+  p2 <- res$dataAverage %>%
+    ggpaired(x = "Type", y = "variable", id = "SID",
              line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
     geom_boxplot(aes(color = Type), outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-    geom_point(aes(x = Type, y = Vm, color = Type), alpha = 0.75, size = 0.75) +
-    stat_compare_means(
-      paired = TRUE,
-      comparisons = list(c("B", "P"), c("P", "O"), c("B", "L")),
-      method = "wilcox", size = 2.5) +
-    stat_compare_means(
-      paired = TRUE,
-      comparisons = list(c("O", "L")),
-      method = "wilcox", size = 2.5) +
+    geom_point(aes(x = Type, y = variable, color = Type), alpha = 0.75, size = 0.75) +
+    stat_pvalue_manual(res$modelResult, size = 2.5) +
     theme_light(base_size = 8) +
     theme(legend.position = "none") +
     ylab("Membrane potential, mV") +
@@ -150,19 +233,18 @@ for (region in c("S1 L23", "S1 L5", "M1 L23", "M1 L5")) {
     xlab("") +
     scale_colour_manual(values = c("B" = colors[ 1 ], "P" = colors[ 2 ], "O" = colors[ 3 ], "L" = colors[ 4 ]))
 
-  p3 <- typeAverage %>%
-    ggpaired(x = "Type", y = "SD", id = "SID",
+  typeAverage <- typeAverage %>%
+    setnames("variable", "Vm") %>%
+    setnames("SD", "variable")
+
+  res <- fitModelForAll(typeAverage)
+
+  p3 <- res$dataAverage %>%
+    ggpaired(x = "Type", y = "variable", id = "SID",
              line.color = "gray", line.size = 0.2, point.size = 0, color = "white") +
     geom_boxplot(aes(color = Type), outlier.alpha = 0, fill = NA, linewidth = 0.25) +
-    geom_point(aes(x = Type, y = SD, color = Type), alpha = 0.75, size = 0.75) +
-    stat_compare_means(
-      paired = TRUE,
-      comparisons = list(c("B", "P"), c("P", "O"), c("B", "L")),
-      method = "wilcox", size = 2.5) +
-    stat_compare_means(
-      paired = TRUE,
-      comparisons = list(c("O", "L")),
-      method = "wilcox", size = 2.5) +
+    geom_point(aes(x = Type, y = variable, color = Type), alpha = 0.75, size = 0.75) +
+    stat_pvalue_manual(res$modelResult, size = 2.5) +
     theme_light(base_size = 8) +
     theme(legend.position = "none") +
     ylab("Membrane potential\nvariability, mV") +
