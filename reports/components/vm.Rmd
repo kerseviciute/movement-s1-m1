@@ -67,7 +67,8 @@ vmData %>%
   ggplot() +
   geom_line(aes(x = Time, y = Value), linewidth = 0.05) +
   theme_light(base_size = 8) +
-  ylab("")
+  ylab("Membrane potential, mV") +
+  xlab("Time, s")
 ```
 
 **Figure 2.** Continuous membrane potential data through all the trials.
