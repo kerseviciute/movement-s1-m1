@@ -15,7 +15,7 @@ library(scales)
 
 stars.pval <- function(x) {
   stars <- c("***", "**", "*", "n.s.")
-  var <- c(0, 0.01, 0.05, 0.10, 1)
+  var <- c(0, 0.001, 0.01, 0.05, 1)
   i <- findInterval(x, var, left.open = T, rightmost.closed = T)
   stars[ i ]
 }

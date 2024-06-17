@@ -15,7 +15,7 @@ library(scales)
 
 stars.pval <- function(x) {
   stars <- c("***", "**", "*", "n.s.")
-  var <- c(0, 0.01, 0.05, 0.10, 1)
+  var <- c(0, 0.001, 0.01, 0.05, 1)
   i <- findInterval(x, var, left.open = T, rightmost.closed = T)
   stars[ i ]
 }
@@ -238,7 +238,7 @@ res <- foreach(type = data[ , unique(Type) ], .combine = rbind) %do% {
 
 plots <- list()
 
-for (type in res[ , unique(Type) ]) {
+for (type in c("Pre-movement", "Movement onset", "Late movement")) {
   plots[[ type ]] <- dataSampleAverage %>%
     .[ Type == type ] %>%
     ggplot(aes(x = Region, y = Change), size = 1, alpha = 0.5) +
@@ -252,7 +252,8 @@ for (type in res[ , unique(Type) ]) {
     ylab("Membrane potential change, mV") +
     theme(strip.background = element_rect(fill = "white")) +
     theme(strip.text = element_text(colour = "black")) +
-    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+    expand_limits(y = 0)
 }
 
 p2 <- ggarrange(
@@ -362,7 +363,7 @@ res <- foreach(type = data[ , unique(Type) ], .combine = rbind) %do% {
 }
 
 plots <- list()
-for (type in res[ , unique(Type) ]) {
+for (type in c("Baseline", "Pre-movement", "Movement onset", "Late movement")) {
   plots[[ type ]] <- dataSampleAverage %>%
     .[ Type == type ] %>%
     ggplot(aes(x = Region, y = AverageVm), size = 1, alpha = 0.5) +
@@ -376,7 +377,8 @@ for (type in res[ , unique(Type) ]) {
     ylab("Membrane potential, mV") +
     theme(strip.background = element_rect(fill = "white")) +
     theme(strip.text = element_text(colour = "black")) +
-    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+    expand_limits(y = -75)
 }
 
 p3 <- ggarrange(
@@ -491,7 +493,7 @@ res <- foreach(type = data[ , unique(Type) ], .combine = rbind) %do% {
 }
 
 plots <- list()
-for (type in res[ , unique(Type) ]) {
+for (type in c("Baseline", "Pre-movement", "Movement onset", "Late movement")) {
   plots[[ type ]] <- dataSampleAverage %>%
     .[ Type == type ] %>%
     ggplot(aes(x = Region, y = AverageSDVm), size = 1, alpha = 0.5) +
@@ -505,7 +507,8 @@ for (type in res[ , unique(Type) ]) {
     ylab("Membrane potential variability, mV") +
     theme(strip.background = element_rect(fill = "white")) +
     theme(strip.text = element_text(colour = "black")) +
-    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1)))
+    scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+    expand_limits(y = 0)
 }
 
 p4 <- ggarrange(
