@@ -33,6 +33,7 @@ title: `r config$report$title`
 - [Figure 4](www/figure4.png)
 - [Figure 5](www/figure5.png)
 - [Figure 6](www/figure6.png)
+- [Supplementary Figure 5](www/supplementary_figure_5.png)
 
 ## Study subjects
 

@@ -171,3 +171,22 @@ rule figure6:
         figure = "{deploy_directory}/www/figure6.png"
     conda: "../env/r.yml"
     script: "../R/figures/figure6.R"
+
+
+rule supplementary_figure_5:
+    input:
+        samples = config["sample_sheet"],
+
+        onset_emg = expand("output/{project}/{sid}/emg/movement_onset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        movement_filter = expand("output/{project}/{sid}/movement_filtered_onset.csv",
+            project = config["project"],
+            sid = samples["Location"]),
+        movement_all = expand("output/{project}/{sid}/movement_episodes.csv",
+            project = config["project"],
+            sid = samples["Location"])
+    output:
+        figure = "docs/www/supplementary_figure_5.png"
+    conda: "../env/r.yml"
+    script: "../R/figures/figureSuppl5.R"
