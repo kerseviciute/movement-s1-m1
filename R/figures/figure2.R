@@ -228,55 +228,6 @@ p12 <- counts %>%
   expand_limits(y = 0)
 
 
-emg <- fread("output/movement-s1-m1/W1/C2/emg/filter.csv")
-x <- as.matrix(emg[ 2:nrow(emg), 2:ncol(emg) ])
-rownames(x) <- emg[ 2:nrow(emg), V1 ]
-emg <- x
-remove(x)
-
-vm <- fread("output/movement-s1-m1/W1/C2/vm/filter.csv")
-x <- as.matrix(vm[ 2:nrow(vm), 2:ncol(vm) ])
-rownames(x) <- vm[ 2:nrow(vm), V1 ]
-vm <- x
-remove(x)
-
-channel <- "2019_12_09t6I0_0"
-channel_vm <- which(rownames(emg) == channel)
-
-channelData <- data.table(
-  Signal = emg[ channel, ],
-  Raw = emg[ channel, ],
-  Time = (seq_len(ncol(emg)) - 1) / 20000,
-  Type = "EMG"
-) %>% rbind(
-  data.table(
-    Signal = c(scale(vm[ channel_vm, ]) + 8),
-    Raw = vm[ channel_vm, ],
-    Time = (seq_len(ncol(emg)) - 1) / 20000,
-    Type = "Vm"
-  )
-)
-
-p13 <- channelData %>%
-  ggplot() +
-  geom_line(aes(x = Time, y = Signal, color = Type), linewidth = 0.1) +
-  scale_y_continuous(
-    name = "EMG, mV",
-    sec.axis = sec_axis(~. + channelData[ Type == "Vm", mean(Raw) ] - 8, name = "Membrane potential, mV"),
-    limits = c(0, 12)
-  ) +
-  scale_color_manual(
-    name = "",
-    values = c("EMG" = "gray50", "Vm" = "#F8766D"),
-    guide = guide_legend(override.aes = list(linewidth = 1))
-  ) +
-  theme_light(base_size = 8) +
-  xlab("Time, s") +
-  xlim(4, 8) +
-  theme(legend.position = "top") +
-  theme(legend.margin = margin(b = -0.25, t = 0, unit = 'cm'))
-
-
 data <- fread("output/movement-s1-m1/W1/C2/emg/filter.csv")
 x <- as.matrix(data[ 2:nrow(data), 2:ncol(data) ])
 rownames(x) <- data[ 2:nrow(data), V1 ]
@@ -569,27 +520,19 @@ p5 <- ggarrange(
   widths = c(0.54, 0.46)
 )
 
-plot <- ggarrange(
-  p14, p13,
-  ncol = 1,
-  nrow = 2,
-  labels = c("a", "d"),
-  font.label = list(size = 9)
-)
-
 ptop <- ggarrange(
-  plot, p1, p2,
+  p14, p1, p2,
   nrow = 1,
-  labels = c("", "b", "c"),
+  labels = c("a", "b", "c"),
   font.label = list(size = 9),
   widths = c(0.3, 0.4, 0.3),
-  common.legend = TRUE
+  common.legend = FALSE
 )
 
 pbottom <- ggarrange(
   p3, p4, p5,
   nrow = 1,
-  labels = c("e", "f", "g"),
+  labels = c("d", "e", "f"),
   widths = c(0.3, 0.3, 0.4),
   font.label = list(size = 9)
 )
