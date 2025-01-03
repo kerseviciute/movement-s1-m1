@@ -306,7 +306,7 @@ p1 <- averageTime %>%
   geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
   geom_point(alpha = 0.5, size = 1) +
   xlab("") +
-  ylab("Average length, ms") +
+  ylab("Average length, s") +
   stat_compare_means(comparisons = list(c("L2/3", "L5")), size = 2.5, method = "t") +
   theme_light(base_size = 8) +
   theme(strip.background = element_rect(fill = "white")) +
@@ -320,7 +320,7 @@ p2 <- averageTime %>%
   geom_boxplot(outlier.alpha = 0, fill = NA, linewidth = 0.25) +
   geom_point(alpha = 0.5, size = 1) +
   xlab("") +
-  ylab("Average length, ms") +
+  ylab("Average length, s") +
   stat_compare_means(comparisons = list(c("M1", "S1")), size = 2.5, method = "t") +
   theme_light(base_size = 8) +
   theme(strip.background = element_rect(fill = "white")) +

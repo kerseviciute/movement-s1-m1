@@ -5,3 +5,4 @@ output
 .*.RDS
 .*.pkl
 movement-s1-m1
+.DS_Store
