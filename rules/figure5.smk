@@ -53,3 +53,26 @@ rule figure5_dataC2:
         model = "output/{project}/figure5/fig5C_S1_L23_Vm_Mean_SD_model_fit.csv"
     conda: "../env/r.yml"
     script: "../R/figure5/dataC2.R"
+
+rule figure5_dataD:
+    input:
+        samples = config["sample_sheet"],
+        movement_filter = expand("output/{project}/{sid}/movement_filtered_onset.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
+        rest_filter = expand("output/{project}/{sid}/rest_filtered_onset.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
+        emg = expand("output/{project}/{sid}/emg/movement_onset.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
+        vm = expand("output/{project}/{sid}/vm/movement_onset.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"])
+    output:
+        average = "output/{project}/figure5/fig5D_S1_L23_vm_average.csv",
+        average_period = "output/{project}/figure5/fig5D_S1_L23_vm_period_average.csv",
+        model = "output/{project}/figure5/fig5D_S1_L23_vm_period_average_model_fit.csv",
+        vm_png = "output/{project}/figure5/fig5D_S1_L23_emg_onset_vm.png"
+    conda: "../env/r.yml"
+    script: "../R/figure5/dataD.R"

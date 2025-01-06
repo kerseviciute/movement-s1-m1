@@ -63,3 +63,7 @@ report:
     - fig5C_S1_L23_W1C2_EMG_example.csv
     - fig5C_S1_L23_Vm_Mean_SD.csv
     - fig5C_S1_L23_Vm_Mean_SD_model_fit.csv
+    - fig5D_S1_L23_vm_average.csv
+    - fig5D_S1_L23_vm_period_average.csv
+    - fig5D_S1_L23_vm_period_average_model_fit.csv
+    - fig5D_S1_L23_emg_onset_vm.png
