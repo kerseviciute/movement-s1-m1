@@ -8,6 +8,7 @@ include: "rules/emg.smk"
 include: "rules/vm.smk"
 include: "rules/reports.smk"
 include: "rules/figures.smk"
+include: "rules/figure5.smk"
 
 rule all:
     input:
@@ -18,6 +19,10 @@ rule all:
         expand("{deploy_directory}/www/{supplementary}",
             deploy_directory = config["deploy_directory"],
             supplementary = config["report"]["supplementary"]
+        ),
+        expand("output/{project}/figure5/{data}",
+            project = config["project"],
+            data = config["report"]["figure5"]
         )
 
 #

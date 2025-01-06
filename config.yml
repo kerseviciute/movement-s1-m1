@@ -58,3 +58,5 @@ report:
     - figure5.png
     - figure6.png
     - supplementary_figure_5.png
+  figure5:
+    - fig5B_S1_L23_EMG_VM_cross_correlation.csv
