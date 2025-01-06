@@ -61,3 +61,5 @@ report:
   figure5:
     - fig5B_S1_L23_EMG_VM_cross_correlation.csv
     - fig5C_S1_L23_W1C2_EMG_example.csv
+    - fig5C_S1_L23_Vm_Mean_SD.csv
+    - fig5C_S1_L23_Vm_Mean_SD_model_fit.csv
