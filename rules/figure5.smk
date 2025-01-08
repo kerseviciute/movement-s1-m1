@@ -60,12 +60,6 @@ rule figure5_dataD:
         movement_filter = expand("output/{project}/{sid}/movement_filtered_onset.csv",
             project = config["project"],
             sid = samples[ samples.Region == "S1_L23" ]["Location"]),
-        rest_filter = expand("output/{project}/{sid}/rest_filtered_onset.csv",
-            project = config["project"],
-            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
-        emg = expand("output/{project}/{sid}/emg/movement_onset.csv",
-            project = config["project"],
-            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
         vm = expand("output/{project}/{sid}/vm/movement_onset.csv",
             project = config["project"],
             sid = samples[ samples.Region == "S1_L23" ]["Location"])
@@ -77,3 +71,32 @@ rule figure5_dataD:
         cellOnsetVm = "output/{project}/figure5/fig5D_S1_L23_movement_onset_vm_per_cell.csv"
     conda: "../env/r.yml"
     script: "../R/figure5/dataD.R"
+
+
+rule movement_onset_emg_mean:
+    input:
+        emg = "output/{project}/{animal_id}/{cell_name}/emg/movement_onset.csv"
+    output:
+        mean = "output/{project}/{animal_id}/{cell_name}/emg/movement_mean.csv"
+    params:
+        sfreq = config["sampling_rate"]
+    conda: "../env/mne.yml"
+    script: "../python/movement_onset_emg_mean.py"
+
+rule figure5_dataE:
+    input:
+        samples = config["sample_sheet"],
+        movement_filter = expand("output/{project}/{sid}/movement_filtered_onset.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
+        emg_mean = expand("output/{project}/{sid}/emg/movement_mean.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"]),
+        vm = expand("output/{project}/{sid}/vm/movement_onset.csv",
+            project = config["project"],
+            sid = samples[ samples.Region == "S1_L23" ]["Location"])
+    output:
+        means = "output/{project}/figure5/fig5E_S1_L23_onset_vm_emg_mean.csv",
+        png = "output/{project}/figure5/fig5E_S1_L23_onset_vm_emg.png"
+    conda: "../env/r.yml"
+    script: "../R/figure5/dataE.R"
