@@ -73,6 +73,7 @@ rule figure5_dataD:
         average = "output/{project}/figure5/fig5D_S1_L23_vm_average.csv",
         average_period = "output/{project}/figure5/fig5D_S1_L23_vm_period_average.csv",
         model = "output/{project}/figure5/fig5D_S1_L23_vm_period_average_model_fit.csv",
-        vm_png = "output/{project}/figure5/fig5D_S1_L23_emg_onset_vm.png"
+        vm_png = "output/{project}/figure5/fig5D_S1_L23_emg_onset_vm.png",
+        cellOnsetVm = "output/{project}/figure5/fig5D_S1_L23_movement_onset_vm_per_cell.csv"
     conda: "../env/r.yml"
     script: "../R/figure5/dataD.R"

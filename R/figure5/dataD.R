@@ -123,6 +123,12 @@ eventDataAverage <- eventData %>%
   .[ , Animal := factor(Animal, levels = c("W1", "W2", "W3", "W4")) ] %>%
   setnames("Vm", "variable")
 
+cellOnsetVm <- eventData %>%
+  .[ , list(Vm, SID, Period = Type, Time, ID) ] %>%
+  .[ order(SID, ID, Time) ]
+
+fwrite(cellOnsetVm, snakemake@output$cellOnsetVm)
+
 p1 <- eventData %>%
   .[ , list(Vm = mean(Vm)), by = list(SID, Type, Time) ] %>%
   ggplot() +
